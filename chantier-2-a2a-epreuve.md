@@ -4,7 +4,69 @@ Ce que le brief attend pour ce chantier : le schéma d'échange A2A (contrat, fi
 
 Exigences concernées : E3, E4, E5 et E6. Le brief résume l'enjeu en une ligne : le partenaire peut être lent, menteur ou en panne, et le contrat doit être respecté à la lettre.
 
-## 1. Le protocole A2A
+Démarche : comme au chantier 1, le cadrage métier (section 1) précède les choix de conception (section 2, arbre de décision) et leur détail (sections 3 à 8) ; l'épreuve vient ensuite (sections 9 et 10).
+
+## 1. Cadrage métier de la collaboration avec le partenaire
+
+La liaison avec le partenaire se conçoit à partir du fonctionnement réel de la collaboration : son historique, ce que le métier attend d'elle, et ce qu'il accepte quand elle fait défaut. Chaque question précise son impact sur la conception.
+
+### Analyse de l'existant
+
+- [ ] Comment l'agent actuel interroge-t-il le partenaire, et que se passe-t-il aujourd'hui quand celui-ci ne répond pas ?
+  *Impact sur la conception : les défaillances réelles à couvrir en priorité.*
+- [ ] Combien de demandes partent chez le partenaire, avec quel délai de réponse moyen, et quelle part de pannes ou de lenteurs ?
+  *Impact sur la conception : le délai par appel, les bornes, le dimensionnement du mode dégradé.*
+- [ ] Le partenaire a-t-il déjà renvoyé des réponses erronées ou incohérentes ? Comment l'a-t-on détecté ?
+  *Impact sur la conception : les contrôles de cohérence de la validation.*
+- [ ] Quelles traces des échanges avec le partenaire sont conservées aujourd'hui ?
+  *Impact sur la conception : les preuves disponibles et le contenu du journal.*
+
+### Expression du besoin
+
+- [ ] Le partenaire est-il indispensable, ou un contrôle interne pourrait-il le remplacer ?
+  *Impact sur la conception : la place de l'échange A2A (question Q0 de l'arbre de décision, section 2).*
+- [ ] Que prévoit exactement le contrat d'échange : champs autorisés, format, délais, nombre d'appels, règles de relance, coût par appel, version du protocole ?
+  *Impact sur la conception : le filtre, la validation et la politique de relance.*
+- [ ] Quelles données personnelles le partenaire peut-il recevoir, et dans quel cadre contractuel et réglementaire ?
+  *Impact sur la conception : la liste blanche du filtre, au regard du principe de minimisation du RGPD.*
+- [ ] Quand le partenaire est indisponible, que souhaite le métier : poursuivre la demande (par exemple sous un seuil de montant), la mettre en attente, ou la confier à un gestionnaire de sinistres ?
+  *Impact sur la conception : le mode dégradé (E5).*
+- [ ] Quel risque le métier accepte-t-il pendant une panne du partenaire : indemniser sans contrôle de fraude, ou différer les remboursements ?
+  *Impact sur la conception : les seuils du mode dégradé.*
+- [ ] Que faire d'une réponse du partenaire arrivée après une décision déjà prise ?
+  *Impact sur la conception : le traitement des réponses tardives.*
+
+### Résultats attendus
+
+- [ ] Quel délai maximal d'attente du partenaire le métier accepte-t-il avant de basculer en mode dégradé ?
+  *Impact sur la conception : le délai par appel.*
+- [ ] Quels indicateurs suivront la collaboration : disponibilité du partenaire, latence, part de réponses rejetées, part de demandes traitées en mode dégradé ?
+  *Impact sur la conception : les métriques du monitorage.*
+- [ ] Comment le métier souhaite-t-il être alerté d'une panne prolongée ou d'un taux anormal de réponses rejetées ?
+  *Impact sur la conception : les alertes et leurs seuils.*
+- [ ] Quelles preuves faudra-t-il produire en cas de litige avec le partenaire : messages envoyés, réponses reçues, motifs de rejet ?
+  *Impact sur la conception : le contenu du journal et sa durée de conservation.*
+
+Éléments à recueillir auprès du client : le contrat du partenaire (schéma, délais, relances, version du protocole A2A), son Agent Card, la partie de `specs_metier.md` qui définit le mode dégradé et l'historique des incidents avec le partenaire.
+
+## 2. Le choix de la liaison : l'arbre de décision
+
+Les questions se posent dans l'ordre, et chaque réponse élimine une option. Q0 est issue de l'expression du besoin (section 1) ; Q1 à Q5 portent sur la conception de la liaison. Les réponses sont provisoires en attendant le contrat du partenaire et `specs_metier.md` (voir le schéma 4).
+
+| # | Question | Réponse provisoire | Ce qu'elle écarte ou ajoute |
+|---|---|---|---|
+| Q0 | Le partenaire anti-fraude externe est-il indispensable, ou un contrôle interne suffirait-il ? | Oui (hypothèse du brief) | Écarte : un contrôle de fraude entièrement interne ; à confirmer lors du cadrage |
+| Q1 | Le partenaire peut-il recevoir toutes les données de la demande ? | Non : seulement les champs du contrat | Retient : un filtre en liste blanche, message construit champ par champ et validé avant l'envoi (E3) |
+| Q2 | Faut-il bloquer l'appel jusqu'à la réponse du partenaire ? | Non : envoi sans attente, puis lecture de l'état jusqu'au délai | Écarte : l'envoi avec attente, qui ne rend pas l'identifiant de la tâche si le délai expire, ce qui rend l'annulation impossible |
+| Q3 | Peut-on relancer librement un appel en échec ? | Non : pas de relance sauvage | Écarte : les relances libres. Relances bornées par le contrat, sur les seules erreurs rejouables, avec un délai croissant |
+| Q4 | Une réponse bien formée est-elle forcément fiable ? | Non : le partenaire peut mentir | Ajoute : une validation à trois niveaux (protocole, schéma, sens) ; toute réponse non conforme est rejetée (E4) |
+| Q5 | Que fait la demande quand aucun verdict valide n'arrive ? | Mode dégradé selon `specs_metier.md` | Retient : une règle unique ; sans verdict valide, le mode dégradé défini par le métier s'applique (E5) |
+
+Liaison retenue : un seul point de sortie (l'agent Fraude), un filtre en liste blanche, un envoi sans attente avec délai par appel et annulation, des relances bornées par le contrat, une validation à trois niveaux et un mode dégradé unique.
+
+La tension à arbitrer : une validation stricte rejette davantage de réponses et sollicite plus souvent le mode dégradé ; une validation souple laisse passer des réponses douteuses. Choix : la rigueur sur la validation, la continuité de service assurée par le mode dégradé.
+
+## 3. Le protocole A2A
 
 ### La version visée
 
@@ -67,7 +129,7 @@ sequenceDiagram
 - [ ] À quel rythme peut-on lire l'état d'une tâche sans enfreindre le contrat ?
 - [ ] Comment relie-t-on une tâche A2A à sa demande Kaldera ?
 
-## 2. Le contrat d'échange [E3] [E4]
+## 4. Le contrat d'échange [E3] [E4]
 
 | Rubrique | Ce qu'il faut définir |
 |---|---|
@@ -177,7 +239,7 @@ Réponse une fois la tâche terminée :
 }
 ```
 
-## 3. Le filtre des données sortantes [E3]
+## 5. Le filtre des données sortantes [E3]
 
 - **Construire un objet neuf.** Le message ne contient que les champs du contrat, recopiés un par un. On ne part pas de la demande complète pour en retirer des champs : un champ ajouté plus tard à la demande passerait le filtre.
 - **Valider avant l'envoi.** Le message sortant est vérifié contre le schéma du contrat, sans champ supplémentaire autorisé (`additionalProperties: false`). En cas d'échec, rien ne part.
@@ -194,7 +256,7 @@ Réponse une fois la tâche terminée :
 - [ ] Un seul agent a-t-il le droit de parler au partenaire ?
 - [ ] Nos logs et nos traces laissent-ils fuiter des données qu'on n'a pas le droit d'envoyer ?
 
-## 4. La validation des réponses [E4]
+## 6. La validation des réponses [E4]
 
 | Niveau | Ce qu'on vérifie |
 |---|---|
@@ -214,7 +276,7 @@ Réponse une fois la tâche terminée :
 - [ ] Une réponse rejetée mène-t-elle au mode dégradé ou à une escalade ?
 - [ ] Garde-t-on le texte libre du partenaire ? Si oui, comment l'empêcher d'injecter des instructions dans le prompt d'un autre agent ?
 
-## 5. Le mode dégradé [E5]
+## 7. Le mode dégradé [E5]
 
 ### Un principe avant les cas
 
@@ -257,14 +319,16 @@ Réactions proposées, à confronter à `specs_metier.md`. Les états sont nomm�
 | Problème d'accès | `auth-required`, HTTP 401 ou 403 | Pas de relance, alerte technique, puis mode dégradé |
 | Réponse tardive | Arrive après le passage en mode dégradé | Journalisée, sans changer la décision déjà prise |
 
-## 6. L'observabilité [E6]
+## 8. L'observabilité et les preuves [E6]
 
-Le brief impose trois métriques par agent : la latence, les échecs et le recours à l'externe.
+Le brief impose trois métriques par agent : la latence, les échecs et le recours à l'externe. Le partenaire pouvant être lent, en panne ou de mauvaise foi, chaque échange doit aussi laisser une preuve vérifiable.
 
 - [ ] Comment mesure-t-on chacune des trois métriques ?
 - [ ] Où ces métriques sont-elles visibles : tableau de bord, logs, rapport ?
 - [ ] Quels éléments observe-t-on au niveau de l'équipe et de son orchestration ?
 - [ ] Comment montrer qu'une demande a suivi le bon chemin ?
+- [ ] Quelles preuves conserve-t-on de chaque échange (message envoyé après filtrage, réponse reçue, résultat de la validation), sans recopier de données hors contrat dans les traces ?
+- [ ] Quels garde-fous propres à la liaison A2A, et quelle métrique dit qu'elle fonctionne bien (disponibilité du partenaire, part de réponses rejetées, part de demandes en mode dégradé) ?
 
 ### Tableau à remplir : les métriques
 
@@ -277,7 +341,7 @@ Le brief impose trois métriques par agent : la latence, les échecs et le recou
 | Bornes atteintes | Équipe | Journal d'événements | |
 | Passages en mode dégradé | Équipe | Journal d'événements | |
 
-## 7. Le plan d'épreuve [E6]
+## 9. Le plan d'épreuve [E6]
 
 - [ ] Comment vérifier automatiquement et rapidement que les specs sont respectées : tests d'acceptance fournis, tests d'intégration sur `eval/scenarios.jsonl` ?
 - [ ] Comment prouver que chaque demande se termine par une décision ou une escalade, sur l'ensemble des scénarios ?
@@ -287,22 +351,22 @@ Le brief impose trois métriques par agent : la latence, les échecs et le recou
 - [ ] Comment simule-t-on le partenaire : un bouchon réglable (lent, en panne, menteur) ?
 - [ ] Les LLM ne répondent pas toujours pareil : combien de rejeux faut-il pour qu'un résultat soit probant ?
 
-### Tableau à remplir : scénarios × signaux × ajustements
+### Scénarios × signaux × ajustements
 
-Chaque exigence a au moins un scénario.
+Chaque exigence a au moins un scénario. Signaux, critères et ajustements sont provisoires (voir le schéma 6).
 
-| Scénario | Exigence | Signal observé | Ajustement possible du chantier 1 |
-|---|---|---|---|
-| Cas nominal | E1 | | |
-| Agent sollicité hors de son rôle | E2 | | |
-| Données en trop dans la demande | E3 | | |
-| Réponse invalide | E4 | | |
-| Partenaire menteur | E4 | | |
-| Partenaire en panne | E5 | | |
-| Partenaire lent | E5, E6 | | |
-| Piège à boucle | E6 | | |
+| Scénario | Exigence | Signal observé | Critère de réussite | Ajustement possible du chantier 1 |
+|---|---|---|---|---|
+| Cas nominal | E1 | Statut final, nombre d'étapes, latence | Une décision, dans les bornes | Aucun : sert de référence |
+| Agent sollicité hors de son rôle | E2 | Réponse de l'agent, sections écrites | Refus, aucune écriture hors de sa section | Frontière : schéma de sortie, droits de lecture |
+| Données en trop dans la demande | E3 | Champs du message envoyé | Seuls les champs du contrat sont partis | Liste blanche du filtre |
+| Réponse invalide | E4 | Rejet au niveau protocole ou schéma | Rejet, rien n'entre dans la mémoire | Règles de validation |
+| Partenaire menteur | E4 | Rejet au niveau du sens | Rejet journalisé, puis mode dégradé | Contrôles de cohérence |
+| Partenaire en panne | E5 | Relances, passage en mode dégradé | Relances dans la limite du contrat, mode dégradé appliqué | Nombre de relances, disjoncteur |
+| Partenaire lent | E5, E6 | Latence de l'agent Fraude, annulation | Annulation au délai, aucune demande bloquée | Délai par appel, délai global |
+| Piège à boucle | E6 | Compteur d'étapes, état répété | Arrêt dans les bornes, escalade motivée | Valeurs des bornes, routage |
 
-## 8. Le journal des ajustements [E6]
+## 10. Le journal des ajustements [E6]
 
 Le brief exige que chaque ajustement de l'orchestration provoqué par un scénario d'épreuve soit consigné. Les bornes et frontières finales doivent être justifiées par les scénarios rejoués, jamais réglées au jugé.
 
@@ -310,11 +374,28 @@ Le brief exige que chaque ajustement de l'orchestration provoqué par un scénar
 |---|---|---|---|---|---|---|
 | | | | | | | |
 
-## 9. Hors brief, mais réel
+## 11. Hors brief, mais réel
 
 - [ ] Une pièce justificative envoyée par le client peut-elle contenir une injection de prompt ? Comment s'en protège-t-on ?
 
-## Schémas à produire pour ce chantier
+## Schémas
 
-- Le schéma d'échange A2A : contrat, filtre de données, validation des réponses, chemin de mode dégradé.
-- Le plan d'épreuve : scénarios × signaux observés × ajustements du chantier 1.
+Première proposition, provisoire : les choix qui dépendent du contrat du partenaire et de `specs_metier.md` (délais, relances, contenu du mode dégradé) seront confirmés ou corrigés à leur lecture. Chaque schéma existe en `.drawio`, modifiable sur [app.diagrams.net](https://app.diagrams.net/), et en `.png`. Ils se régénèrent avec `scripts/make_schemas_ch2.py`.
+
+### 4. Le choix de la liaison : l'arbre de décision
+
+Une question métier (Q0), puis cinq questions de conception posées dans l'ordre ; chaque réponse élimine une option, jusqu'à la liaison retenue. Fichiers : [schema-4-arbre-liaison-a2a.drawio](schemas/schema-4-arbre-liaison-a2a.drawio), [PNG](schemas/schema-4-arbre-liaison-a2a.png).
+
+![Arbre de décision de la liaison A2A](schemas/schema-4-arbre-liaison-a2a.png)
+
+### 5. L'échange A2A, le filtre, la validation et le chemin de mode dégradé
+
+Un seul point de sortie vers le partenaire ; envoi sans attente, lecture de l'état et annulation au délai ; validation à trois niveaux ; tout échec mène au mode dégradé défini par le métier. Fichiers : [schema-5-echange-a2a.drawio](schemas/schema-5-echange-a2a.drawio), [PNG](schemas/schema-5-echange-a2a.png).
+
+![Échange A2A et mode dégradé](schemas/schema-5-echange-a2a.png)
+
+### 6. Le plan d'épreuve
+
+La boucle rejouer, observer, comparer, ajuster, consigner, puis le tableau des scénarios × signaux × ajustements du chantier 1. Fichiers : [schema-6-plan-epreuve.drawio](schemas/schema-6-plan-epreuve.drawio), [PNG](schemas/schema-6-plan-epreuve.png).
+
+![Plan d'épreuve](schemas/schema-6-plan-epreuve.png)

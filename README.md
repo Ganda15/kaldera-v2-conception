@@ -13,9 +13,9 @@ Les questions de réflexion ont été discutées en groupe pendant la séance du
 | Fichier | Contenu |
 |---|---|
 | [chantier-1-equipe-orchestration.md](chantier-1-equipe-orchestration.md) | Chantier 1 : cadrage métier (existant, besoin, résultats attendus), choix du pattern par arbre de décision, carte des agents avec contrats et garde-fous, orchestration, mémoire partagée, observabilité et plan de preuve |
-| [chantier-2-a2a-epreuve.md](chantier-2-a2a-epreuve.md) | Chantier 2 : protocole et contrat A2A, filtre des données, validation des réponses, mode dégradé, plan d'épreuve, journal des ajustements |
-| [schemas/](schemas/) | Schémas du chantier 1, en `.drawio` (modifiable) et en `.png` |
-| [scripts/](scripts/) | Générateur des schémas (`make_schemas_ch1.py`) et de leur légende en puces |
+| [chantier-2-a2a-epreuve.md](chantier-2-a2a-epreuve.md) | Chantier 2 : cadrage métier de la collaboration avec le partenaire, choix de la liaison par arbre de décision, protocole et contrat A2A, filtre des données, validation des réponses, mode dégradé, observabilité et preuves, plan d'épreuve, journal des ajustements |
+| [schemas/](schemas/) | Schémas des chantiers 1 (0 à 3) et 2 (4 à 6), en `.drawio` (modifiable) et en `.png` |
+| [scripts/](scripts/) | Générateurs des schémas (`make_schemas_ch1.py`, `make_schemas_ch2.py`), outils communs et légende en puces |
 
 ## Les six exigences de la direction des opérations
 
@@ -38,8 +38,9 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 | Carte des agents : rôles, frontières (point ambigu tranché), dépendances, parallélisme | Chantier 1, section 3 |
 | Schéma d'orchestration : délégations, conditions d'arrêt, bornes provisoires | Chantier 1, section 4 |
 | Modèle de la mémoire partagée | Chantier 1, sections 5 et 6 |
-| Schéma d'échange A2A : contrat, filtre de données, validation des réponses, chemin de mode dégradé | Chantier 2, sections 1 à 5 |
-| Plan d'épreuve : scénarios d'intégration × signaux observés × ajustement possible du chantier 1 | Chantier 2, sections 6 à 8 |
+| Cadrage métier du partenaire et choix de la liaison | Chantier 2, sections 1 et 2 |
+| Schéma d'échange A2A : contrat, filtre de données, validation des réponses, chemin de mode dégradé | Chantier 2, sections 3 à 7 |
+| Plan d'épreuve : scénarios d'intégration × signaux observés × ajustement possible du chantier 1 | Chantier 2, sections 8 à 10 |
 
 ## Mode d'emploi
 
@@ -53,7 +54,7 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 - [ ] Réponses du chantier 1
 - [ ] Réponses du chantier 2
 - [x] Schémas du chantier 1 : arbre de décision, carte des agents, orchestration, mémoire partagée (proposition provisoire)
-- [ ] Schémas du chantier 2 : échange A2A et mode dégradé, plan d'épreuve
+- [x] Schémas du chantier 2 : arbre de décision de la liaison, échange A2A et mode dégradé, plan d'épreuve (proposition provisoire)
 - [ ] Dossier validé par le formateur, avant tout code
 
 ## Questions pour le formateur

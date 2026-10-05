@@ -169,7 +169,7 @@ Le brief range ces deux points dans la carte des agents.
 
 ### Tableau à remplir : les bornes provisoires
 
-Les valeurs de départ sont provisoires. Le plan d'épreuve du chantier 2 les confirme ou les ajuste, et chaque ajustement entre dans le journal (voir [chantier 2, section 8](chantier-2-a2a-epreuve.md)).
+Les valeurs de départ sont provisoires. Le plan d'épreuve du chantier 2 les confirme ou les ajuste, et chaque ajustement entre dans le journal (voir [chantier 2, section 10](chantier-2-a2a-epreuve.md)).
 
 | Borne | Valeur de départ | Justification | Scénario d'épreuve qui la teste |
 |---|---|---|---|
