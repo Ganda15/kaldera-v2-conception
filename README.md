@@ -14,6 +14,8 @@ Les questions de réflexion ont été discutées en groupe pendant la séance du
 |---|---|
 | [chantier-1-equipe-orchestration.md](chantier-1-equipe-orchestration.md) | Chantier 1 : choix d'architecture, carte des agents, orchestration, mémoire partagée, observabilité à préparer |
 | [chantier-2-a2a-epreuve.md](chantier-2-a2a-epreuve.md) | Chantier 2 : protocole et contrat A2A, filtre des données, validation des réponses, mode dégradé, plan d'épreuve, journal des ajustements |
+| [schemas/](schemas/) | Schémas du chantier 1, en `.drawio` (modifiable) et en `.png` |
+| [scripts/](scripts/) | Générateur des schémas (`make_schemas_ch1.py`) et de leur légende en puces |
 
 ## Les six exigences de la direction des opérations
 
@@ -49,7 +51,8 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 - [ ] `specs_metier.md`, `eval/scenarios.jsonl` et tests d'acceptance reçus
 - [ ] Réponses du chantier 1
 - [ ] Réponses du chantier 2
-- [ ] Schémas produits (carte des agents, orchestration et mémoire, échange A2A, plan d'épreuve)
+- [x] Schémas du chantier 1 : carte des agents, orchestration, mémoire partagée (proposition provisoire)
+- [ ] Schémas du chantier 2 : échange A2A et mode dégradé, plan d'épreuve
 - [ ] Dossier validé par le formateur, avant tout code
 
 ## Questions pour le formateur

@@ -1,0 +1,4 @@
+# Fichiers produits pour le rendu PNG des schémas (régénérés par scripts/make_schemas_ch1.py)
+schemas/*.html
+chrome-profile/
+__pycache__/

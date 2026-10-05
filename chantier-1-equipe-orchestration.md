@@ -121,8 +121,24 @@ Le monitorage se code au chantier 2. Le journal d'événements, lui, vit dans la
 - [ ] Quels éléments observe-t-on au niveau de l'équipe et de son orchestration ?
 - [ ] Comment montrer qu'une demande a suivi le bon chemin, avec une trace rejouable par demande ?
 
-## Schémas à produire pour ce chantier
+## Schémas
 
-- La carte des agents : rôles, frontières, point ambigu tranché, dépendances, parallélisme.
-- Le schéma d'orchestration et sa machine à états : délégations, conditions d'arrêt, bornes provisoires.
-- Le modèle de la mémoire partagée : sections, droits de lecture et d'écriture, journal d'événements.
+Première proposition, provisoire : les choix qui dépendent de `specs_metier.md` (propriétaire de la suspicion de fraude, refus bloquant pour pièces manquantes, valeurs des bornes) seront confirmés ou corrigés à sa lecture. Chaque schéma existe en `.drawio`, modifiable sur [app.diagrams.net](https://app.diagrams.net/), et en `.png`. Ils se régénèrent avec `scripts/make_schemas_ch1.py`.
+
+### 1. La carte des agents
+
+Rôles, frontières (avec le point ambigu tranché), dépendances et parallélisme. Fichiers : [schema-1-carte-des-agents.drawio](schemas/schema-1-carte-des-agents.drawio), [PNG](schemas/schema-1-carte-des-agents.png).
+
+![Carte des agents](schemas/schema-1-carte-des-agents.png)
+
+### 2. L'orchestration et la terminaison garantie
+
+Délégations, conditions d'arrêt, bornes provisoires ; chaque chemin finit par une décision ou une escalade humaine motivée. Fichiers : [schema-2-orchestration.drawio](schemas/schema-2-orchestration.drawio), [PNG](schemas/schema-2-orchestration.png).
+
+![Orchestration et terminaison garantie](schemas/schema-2-orchestration.png)
+
+### 3. La mémoire partagée de la demande
+
+Sections, propriétaire de chaque section, droits de lecture, orchestrateur seul écrivain, sauvegarde après chaque étape, journal d'événements. Fichiers : [schema-3-memoire-partagee.drawio](schemas/schema-3-memoire-partagee.drawio), [PNG](schemas/schema-3-memoire-partagee.png).
+
+![Mémoire partagée de la demande](schemas/schema-3-memoire-partagee.png)
