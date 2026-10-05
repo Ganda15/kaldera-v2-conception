@@ -1,4 +1,4 @@
-# Schémas du chantier 1 de Kaldera V2 : carte des agents, orchestration, mémoire partagée.
+# Schémas du chantier 1 de Kaldera V2 : arbre de décision, carte des agents, orchestration, mémoire partagée.
 # Pour chaque schéma : un .drawio (éditable sur app.diagrams.net) et un .html (rendu par le viewer draw.io),
 # d'où le .png est tiré par Chrome headless. Légende en puces colorées (legende_chips.py).
 
@@ -292,3 +292,58 @@ s.edge("m6", "journal", "metr", E_EXT, "", sortie=(1, 0.5), entree=(0, 0.5))
 s.legende([(VERT, "Orchestrateur, seul écrivain"), (BLEU, "Section d'un agent"), (ORANGE, "Frontière par les données"),
            (ROUGE, "Lecture interdite"), (GRIS, "Externe ou chantier 2")], 30, 820)
 s.ecrire("schema-3-memoire-partagee", "Mémoire partagée", 1490, 860)
+
+# =============================================================================================================
+# Schéma 0 : le choix du pattern, arbre de décision
+# =============================================================================================================
+VIOLET = "#8e7cc3"    # question produit
+MILIEU = "verticalAlign=middle;spacingTop=0;"
+S_QPROD = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9d2e9;strokeColor={VIOLET};strokeWidth=2;"
+S_QTECH = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9ead3;strokeColor={VERT};strokeWidth=1.5;"
+S_ECARTE = BASE + GAUCHE + MILIEU + "rounded=1;fillColor=#f3f3f3;strokeColor=#999999;dashed=1;fontColor=#555555;fontSize=11;"
+S_RETENU = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#cfe2f3;strokeColor={BLEU};fontSize=11;"
+S_FINAL = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9ead3;strokeColor={VERT};strokeWidth=3;"
+
+s = Schema()
+s.box("t", "Kaldera V2 · Choix du pattern agentique : arbre de décision · Chantier 1", 30, 20, 1100, 30, S_TITRE)
+s.box("st", "Une question produit, puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option. "
+            "Réponses provisoires, à confirmer avec specs_metier.md.", 30, 54, 1180, 22, S_SOUS)
+
+questions = [
+    ("q0", "<b>Q0 · produit</b> : un système agentique est-il justifié, face à un humain ou à des règles simples ?", S_QPROD),
+    ("q1", "<b>Q1</b> : un seul agent avec 10 à 15 outils suffit-il ?", S_QTECH),
+    ("q2", "<b>Q2</b> : les étapes sont-elles connues d'avance, et dans quel ordre ?", S_QTECH),
+    ("q3", "<b>Q3</b> : des sous-tâches peuvent-elles s'exécuter en parallèle ?", S_QTECH),
+    ("q4", "<b>Q4</b> : faut-il un contrôle central qui garantit une décision ou une escalade pour chaque demande ?", S_QTECH),
+    ("q5", "<b>Q5</b> : quelles métriques par agent faut-il rendre visibles ?", S_QTECH),
+]
+cotes = [
+    ("r0", "<b>Écarté</b> : tout confier à un LLM. L'éligibilité et les plafonds sont des règles, elles restent en code.", S_ECARTE, "écarte"),
+    ("r1", "<b>Écarté</b> : l'agent unique. Ses rôles ne peuvent pas être prouvés séparément (E2) ; c'est le défaut de l'agent actuel.", S_ECARTE, "écarte"),
+    ("r2", "<b>Écarté</b> : un planificateur LLM qui invente les étapes. Le routage se fait par règles, testables et bornables.", S_ECARTE, "écarte"),
+    ("r3", "<b>Retenu</b> : éligibilité et pièces en parallèle, puis regroupement de leurs résultats ; la suite s'enchaîne dans l'ordre.", S_RETENU, "retient"),
+    ("r4", "<b>Écarté</b> : des agents qui se passent la main sans contrôle central ; personne ne garantirait la fin de chaque demande (E1).", S_ECARTE, "écarte"),
+    ("r5", "<b>Ajouté</b> : un journal d'événements à chaque étape, source des métriques par agent (E6).", S_RETENU, "ajoute"),
+]
+reponses = ["oui, en partie : pour lire le texte libre des pièces", "non",
+            "oui : éligibilité et pièces, puis estimation, fraude, décision", "oui : éligibilité et pièces", "oui",
+            "latence, échecs, appels au partenaire"]
+Y0, PAS = 110, 120
+for i, ((qid, qtexte, qstyle), (rid, rtexte, rstyle, verbe)) in enumerate(zip(questions, cotes)):
+    y = Y0 + i * PAS
+    s.box(qid, qtexte, 60, y, 520, 64, qstyle)
+    s.box(rid, rtexte, 700, y, 520, 64, rstyle)
+    s.edge(f"e{rid}", qid, rid, E_EXT if rstyle == S_ECARTE else E_DEP, verbe, sortie=(1, 0.5), entree=(0, 0.5))
+Y_FIN = Y0 + 6 * PAS
+s.box("final", "<b>Pattern retenu</b> : un orchestrateur central écrit en code (pattern superviseur) et quatre agents spécialistes · "
+               "éligibilité et pièces en parallèle · un LLM seulement pour lire le texte libre des pièces · "
+               "un journal d'événements à chaque étape", 60, Y_FIN, 520, 90, S_FINAL)
+ids = [q[0] for q in questions] + ["final"]
+for i in range(6):
+    s.edge(f"d{i}", ids[i], ids[i + 1], E_DEP, reponses[i], sortie=(0.5, 1), entree=(0.5, 0))
+s.box("tension", "<b>Tension à arbitrer</b> : le code déterministe est prévisible mais peu flexible ; un système tout agentique "
+                 "est flexible mais difficile à garantir. Choix : un squelette en code, et le LLM seulement là où il faut lire "
+                 "du texte libre.", 700, Y_FIN, 520, 90, S_AMBIG + MILIEU)
+s.legende([(VIOLET, "Question produit"), (VERT, "Question d'architecture"), (GRIS, "Option écartée"),
+           (BLEU, "Option retenue ou ajoutée"), (ORANGE, "Tension à arbitrer")], 30, Y_FIN + 120)
+s.ecrire("schema-0-arbre-de-decision", "Arbre de décision du pattern", 1260, Y_FIN + 160)
