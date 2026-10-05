@@ -12,7 +12,7 @@ Les questions de réflexion ont été discutées en groupe pendant la séance du
 
 | Fichier | Contenu |
 |---|---|
-| [chantier-1-equipe-orchestration.md](chantier-1-equipe-orchestration.md) | Chantier 1 : le produit d'abord (existant, besoin, attendu), choix du pattern par arbre de décision, carte des agents avec contrats et garde-fous, orchestration, mémoire partagée, observabilité et plan de preuve |
+| [chantier-1-equipe-orchestration.md](chantier-1-equipe-orchestration.md) | Chantier 1 : cadrage métier (existant, besoin, résultats attendus), choix du pattern par arbre de décision, carte des agents avec contrats et garde-fous, orchestration, mémoire partagée, observabilité et plan de preuve |
 | [chantier-2-a2a-epreuve.md](chantier-2-a2a-epreuve.md) | Chantier 2 : protocole et contrat A2A, filtre des données, validation des réponses, mode dégradé, plan d'épreuve, journal des ajustements |
 | [schemas/](schemas/) | Schémas du chantier 1, en `.drawio` (modifiable) et en `.png` |
 | [scripts/](scripts/) | Générateur des schémas (`make_schemas_ch1.py`) et de leur légende en puces |
@@ -34,7 +34,7 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 
 | Schéma attendu | Où il se prépare |
 |---|---|
-| Questions produit (existant, besoin, attendu) et choix du pattern | Chantier 1, sections 1 et 2 |
+| Cadrage métier (existant, besoin, résultats attendus) et choix du pattern | Chantier 1, sections 1 et 2 |
 | Carte des agents : rôles, frontières (point ambigu tranché), dépendances, parallélisme | Chantier 1, section 3 |
 | Schéma d'orchestration : délégations, conditions d'arrêt, bornes provisoires | Chantier 1, section 4 |
 | Modèle de la mémoire partagée | Chantier 1, sections 5 et 6 |

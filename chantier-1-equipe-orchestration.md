@@ -4,58 +4,58 @@ Ce que le brief attend pour ce chantier : la carte des agents (rôles, frontièr
 
 Exigences concernées : E1, E2 et E6, plus E3 pour les champs sensibles de la mémoire. Le détail des exigences est dans le [README](README.md).
 
-Ordre de travail : le produit d'abord (section 1), puis le choix du pattern (section 2), puis l'équipe elle-même (sections 3 à 6). Une architecture choisie avant de connaître le produit risque d'optimiser ce qui n'a pas besoin de l'être.
+Démarche : le cadrage métier (section 1) précède le choix du pattern (section 2) et la conception de l'équipe (sections 3 à 6). Une architecture définie avant le cadrage risque d'optimiser ce qui n'en a pas besoin.
 
-## 1. Le produit avant les agents
+## 1. Cadrage métier
 
-Avant de concevoir l'équipe, on interroge le client sur trois axes : l'existant, le besoin, l'attendu. Challenger ses choix permet de comprendre les vraies contraintes et d'éviter des optimisations inutiles. Sous chaque question, la décision de conception qu'elle permet de prendre.
+Avant toute conception technique, un cadrage avec le métier établit les contraintes réelles du système. Il s'organise en trois volets : l'analyse de l'existant, l'expression du besoin et les résultats attendus. Questionner les choix déjà faits par le client permet d'identifier les contraintes effectives et d'éviter des optimisations sans valeur. Chaque question précise son impact sur la conception.
 
-### L'existant
+### Analyse de l'existant
 
-- [ ] Le système actuel a-t-il déjà fonctionné correctement ? Si oui, depuis quand dérive-t-il, et quelles métriques ou traces montrent le changement ?
-  *Décide : la référence de départ, à laquelle comparer la nouvelle équipe.*
-- [ ] Quelles métriques et quelles traces existent aujourd'hui (journaux, tableaux de bord, suivi LLMOps ou MLOps) ?
-  *Décide : ce qui peut être réutilisé pour l'observabilité.*
-- [ ] Pourquoi l'agent généraliste a-t-il été construit ainsi ? Quels choix ont été faits, et pour quelles raisons ?
-  *Décide : les contraintes cachées à garder ou à lever.*
-- [ ] Combien de demandes arrivent par jour, avec quels pics ? Combien sont bloquées aujourd'hui, et à quelle étape ?
-  *Décide : le parallélisme, les bornes, les priorités.*
-- [ ] Peut-on suivre une vraie demande de bout en bout ? Où attend-elle ?
-  *Décide : les étapes réelles et l'endroit des escalades.*
+- [ ] Le système actuel a-t-il déjà donné satisfaction ? Si oui, depuis quand ses performances se dégradent-elles, et quels indicateurs ou quelles traces l'attestent ?
+  *Impact sur la conception : la situation de référence à laquelle comparer la nouvelle équipe.*
+- [ ] De quels indicateurs et de quelles traces dispose-t-on aujourd'hui (journaux, tableaux de bord, suivi LLMOps ou MLOps) ?
+  *Impact sur la conception : les sources réutilisables pour l'observabilité.*
+- [ ] Pour quelles raisons l'agent généraliste actuel a-t-il été conçu ainsi ?
+  *Impact sur la conception : les contraintes implicites à conserver ou à lever.*
+- [ ] Quel est le volume de demandes (moyenne journalière, pics) ? Combien sont bloquées aujourd'hui, et à quelle étape ?
+  *Impact sur la conception : le parallélisme, les bornes, les priorités de traitement.*
+- [ ] Quel est le parcours réel d'une demande, de sa réception au remboursement, et où se situent les temps d'attente ?
+  *Impact sur la conception : les étapes effectives et le positionnement des escalades.*
 
-### Le besoin
+### Expression du besoin
 
-- [ ] Un système agentique est-il justifié, face à un traitement humain ou à un système déterministe plus simple ? Pour quelles étapes ?
-  *Décide : où un LLM sert vraiment (question Q0 de l'arbre de décision, section 2).*
-- [ ] Le partenaire anti-fraude externe est-il indispensable, ou remplaçable par un contrôle maison ?
-  *Décide : la place de l'échange A2A et du mode dégradé (chantier 2).*
-- [ ] Les règles métier sont-elles écrites (éligibilité, plafonds, pièces exigées) ? Qui les change, et à quelle fréquence ?
-  *Décide : règles écrites en code, ou placées dans une configuration.*
-- [ ] Un refus entièrement automatique est-il permis, ou un humain doit-il confirmer chaque refus ?
-  *Décide : les états finaux. Le RGPD (article 22) encadre les décisions fondées uniquement sur un traitement automatisé ; à confirmer avec le service juridique du client.*
-- [ ] Qu'est-ce qui coûte le plus : payer une fraude, ou refuser à tort une demande valide ?
-  *Décide : la sévérité du contrôle de fraude et le seuil d'escalade.*
-- [ ] Qui traite les escalades, et combien peut-il en absorber par jour ?
-  *Décide : le taux d'escalade acceptable, donc la sévérité des bornes.*
+- [ ] Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou d'un système déterministe plus simple ? Pour quelles étapes ?
+  *Impact sur la conception : le périmètre réel du LLM (question Q0 de l'arbre de décision, section 2).*
+- [ ] Le partenaire anti-fraude externe est-il indispensable, ou un contrôle interne pourrait-il le remplacer ?
+  *Impact sur la conception : la place de l'échange A2A et du mode dégradé (chantier 2).*
+- [ ] Les règles métier (éligibilité, plafonds, pièces exigées) sont-elles formalisées ? Qui les fait évoluer, et à quelle fréquence ?
+  *Impact sur la conception : règles codées, ou externalisées dans une configuration.*
+- [ ] Un refus peut-il être prononcé de façon entièrement automatisée, ou doit-il être validé par un gestionnaire de sinistres ?
+  *Impact sur la conception : les états finaux. L'article 22 du RGPD encadre les décisions fondées exclusivement sur un traitement automatisé ; point à valider avec le service juridique du client.*
+- [ ] Quelle erreur coûte le plus au métier : indemniser une fraude, ou refuser à tort une demande légitime ?
+  *Impact sur la conception : le niveau d'exigence du contrôle de fraude et le seuil d'escalade.*
+- [ ] Quelle équipe traite les escalades, et quelle est sa capacité de traitement journalière ?
+  *Impact sur la conception : le taux d'escalade acceptable, donc la sévérité des bornes.*
 
-### L'attendu
+### Résultats attendus
 
 - [ ] Quel délai de décision vise-t-on pour une demande ?
-  *Décide : le délai global par demande.*
-- [ ] Dans trois mois, quel chiffre dira que le système fonctionne : délai de décision, part de demandes bloquées, part d'escalades, réclamations ?
-  *Décide : les métriques suivies et les seuils des tests.*
-- [ ] Quelles décisions et quelles traces faut-il conserver, combien de temps, et qui les audite ?
-  *Décide : le contenu du journal d'événements et sa durée de conservation.*
+  *Impact sur la conception : le délai global par demande.*
+- [ ] Quels indicateurs mesureront le succès à trois mois : délai de décision, part de demandes bloquées, taux d'escalade, réclamations ?
+  *Impact sur la conception : les métriques suivies et les seuils des tests.*
+- [ ] Quelles décisions et quelles traces doivent être conservées, pour quelle durée, et qui en assure l'audit ?
+  *Impact sur la conception : le contenu du journal d'événements et sa durée de conservation.*
 
-Documents à demander au client : `specs_metier.md`, le contrat du partenaire, quelques demandes réelles anonymisées (dont des demandes restées bloquées) et les journaux d'une semaine difficile. Les demandes réelles deviendront des scénarios du plan d'épreuve.
+Éléments à recueillir auprès du client : `specs_metier.md`, le contrat du partenaire, un échantillon de demandes réelles anonymisées (dont des demandes restées bloquées) et les journaux d'une période de forte charge ou d'incidents. Les demandes réelles alimenteront les scénarios du plan d'épreuve.
 
 ## 2. Le choix du pattern : l'arbre de décision
 
-Les questions se posent dans l'ordre, et chaque réponse élimine une option. Q0 vient de l'axe « besoin » de la section 1 ; Q1 à Q5 portent sur l'architecture. Les réponses sont provisoires en attendant `specs_metier.md` (voir le schéma 0).
+Les questions se posent dans l'ordre, et chaque réponse élimine une option. Q0 est issue de l'expression du besoin (section 1) ; Q1 à Q5 portent sur l'architecture. Les réponses sont provisoires en attendant `specs_metier.md` (voir le schéma 0).
 
 | # | Question | Réponse provisoire | Ce qu'elle écarte ou ajoute |
 |---|---|---|---|
-| Q0 | Un système agentique est-il justifié, face à un humain ou à des règles simples ? | En partie : seulement pour lire le texte libre des pièces | Écarte : tout confier à un LLM. L'éligibilité et les plafonds restent des règles en code |
+| Q0 | Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou de règles simples ? | En partie : seulement pour lire le texte libre des pièces | Écarte : tout confier à un LLM. L'éligibilité et les plafonds restent des règles en code |
 | Q1 | Un seul agent avec 10 à 15 outils suffit-il ? | Non | Écarte : l'agent unique, dont les rôles ne peuvent pas être prouvés séparément (E2) ; c'est le défaut de l'agent actuel |
 | Q2 | Les étapes sont-elles connues d'avance, et dans quel ordre ? | Oui : éligibilité et pièces, puis estimation, fraude, décision | Écarte : un planificateur LLM qui invente les étapes. Le routage se fait par règles, testables et bornables |
 | Q3 | Des sous-tâches peuvent-elles s'exécuter en parallèle ? | Oui : éligibilité et pièces | Retient : ces deux étapes en parallèle, puis le regroupement de leurs résultats |
@@ -224,7 +224,7 @@ Première proposition, provisoire : les choix qui dépendent de `specs_metier.md
 
 ### 0. Le choix du pattern : l'arbre de décision
 
-Une question produit (Q0), puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option, jusqu'au pattern retenu. Fichiers : [schema-0-arbre-de-decision.drawio](schemas/schema-0-arbre-de-decision.drawio), [PNG](schemas/schema-0-arbre-de-decision.png).
+Une question métier (Q0), puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option, jusqu'au pattern retenu. Fichiers : [schema-0-arbre-de-decision.drawio](schemas/schema-0-arbre-de-decision.drawio), [PNG](schemas/schema-0-arbre-de-decision.png).
 
 ![Arbre de décision du pattern](schemas/schema-0-arbre-de-decision.png)
 

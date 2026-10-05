@@ -296,7 +296,7 @@ s.ecrire("schema-3-memoire-partagee", "Mémoire partagée", 1490, 860)
 # =============================================================================================================
 # Schéma 0 : le choix du pattern, arbre de décision
 # =============================================================================================================
-VIOLET = "#8e7cc3"    # question produit
+VIOLET = "#8e7cc3"    # question métier
 MILIEU = "verticalAlign=middle;spacingTop=0;"
 S_QPROD = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9d2e9;strokeColor={VIOLET};strokeWidth=2;"
 S_QTECH = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9ead3;strokeColor={VERT};strokeWidth=1.5;"
@@ -306,11 +306,11 @@ S_FINAL = BASE + GAUCHE + MILIEU + f"rounded=1;fillColor=#d9ead3;strokeColor={VE
 
 s = Schema()
 s.box("t", "Kaldera V2 · Choix du pattern agentique : arbre de décision · Chantier 1", 30, 20, 1100, 30, S_TITRE)
-s.box("st", "Une question produit, puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option. "
+s.box("st", "Une question métier, puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option. "
             "Réponses provisoires, à confirmer avec specs_metier.md.", 30, 54, 1180, 22, S_SOUS)
 
 questions = [
-    ("q0", "<b>Q0 · produit</b> : un système agentique est-il justifié, face à un humain ou à des règles simples ?", S_QPROD),
+    ("q0", "<b>Q0 · métier</b> : le recours à un système agentique est-il justifié, au regard d'un traitement humain ou de règles simples ?", S_QPROD),
     ("q1", "<b>Q1</b> : un seul agent avec 10 à 15 outils suffit-il ?", S_QTECH),
     ("q2", "<b>Q2</b> : les étapes sont-elles connues d'avance, et dans quel ordre ?", S_QTECH),
     ("q3", "<b>Q3</b> : des sous-tâches peuvent-elles s'exécuter en parallèle ?", S_QTECH),
@@ -344,6 +344,6 @@ for i in range(6):
 s.box("tension", "<b>Tension à arbitrer</b> : le code déterministe est prévisible mais peu flexible ; un système tout agentique "
                  "est flexible mais difficile à garantir. Choix : un squelette en code, et le LLM seulement là où il faut lire "
                  "du texte libre.", 700, Y_FIN, 520, 90, S_AMBIG + MILIEU)
-s.legende([(VIOLET, "Question produit"), (VERT, "Question d'architecture"), (GRIS, "Option écartée"),
+s.legende([(VIOLET, "Question métier"), (VERT, "Question d'architecture"), (GRIS, "Option écartée"),
            (BLEU, "Option retenue ou ajoutée"), (ORANGE, "Tension à arbitrer")], 30, Y_FIN + 120)
 s.ecrire("schema-0-arbre-de-decision", "Arbre de décision du pattern", 1260, Y_FIN + 160)
