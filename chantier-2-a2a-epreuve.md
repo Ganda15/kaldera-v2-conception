@@ -304,6 +304,46 @@ Il sera tenu pendant le développement dans `docs/journal-ajustements.md`, une l
 |---|---|---|---|---|---|---|---|
 | | | | | | | | |
 
+## 10. Cas d'usage : quatre échanges avec le partenaire
+
+Chaque cas est un scénario de `eval/scenarios.jsonl` ; les cas d'usage de l'équipe seule sont au [chantier 1, section 7](chantier-1-equipe-orchestration.md).
+
+### Cas 5 : un avis faible (AF-01, KAL-26-0201)
+
+Situation : formule confort, contrat de 71 jours (indicateur F2), dégât des eaux de 1 200 €, pièces complètes.
+
+Déroulé : éligibilité et pièces conformes ; estimé 1 050 € ; l'agent Anti-fraude construit le message de sept champs (section 3) et envoie un seul `message/send` ; la réponse passe les cinq niveaux de validation ; l'avis `faible` est écrit dans `avis_fraude` ; règle 4 : la demande poursuit ; règle 6 : acceptée.
+
+Issue : décision acceptée, 1 050 €, `avis_fraude` de niveau faible. Ce que le cas montre : le chemin nominal de la liaison, sans aucune donnée personnelle envoyée.
+
+### Cas 6 : un avis modéré (AF-04, KAL-26-0204)
+
+Situation : formule confort, contrat de 70 jours (F2), incendie de 6 400 € (F1).
+
+Déroulé : estimé 6 250 € ; un appel ; réponse valide de niveau `modere` ; règle 4 : escalade.
+
+Issue : escalade `gestionnaire`, motif « contrôle renforcé ». Ce que le cas montre : l'avis est consultatif ; c'est la Coordination qui en tire l'issue.
+
+### Cas 7 : une réponse incohérente (INV-02, KAL-26-0302)
+
+Situation : formule premium, incendie de 6 200 € (F1) ; le partenaire simulé renvoie un niveau incohérent avec son score.
+
+Déroulé : la réponse passe les niveaux 1 à 4 et échoue au niveau 5 (cohérence) ; elle est écartée, seule la raison `coherence:niveau_incoherent` est gardée ; l'avis est indisponible ; 6 200 € dépassent 1 500 € : mode dégradé avec escalade.
+
+Issue : escalade `cellule_fraude`, `mode_degrade: true`, `avis_fraude: null`. Ce que le cas montre : [E4], une réponse bien formée mais fausse n'est jamais exploitée ni recopiée.
+
+### Cas 8 : un partenaire lent pendant un lot (PAN-02)
+
+Situation : trois demandes traitées ensemble ; le partenaire simulé répond en 5 s, au-delà des 3 s du contrat.
+
+| Dossier | Indicateur | Déroulé | Issue attendue |
+|---|---|---|---|
+| KAL-26-0501 | aucun | aucun appel, aucune attente | acceptée 1 800 € |
+| KAL-26-0502 | F3 (3 sinistres en 12 mois) | appel abandonné à 3 s ; estimé 950 € ≤ 1 500 € | acceptée 950 €, mode dégradé |
+| KAL-26-0503 | F1 (6 900 €) | appel abandonné à 3 s ; plus de 1 500 € | escalade `cellule_fraude`, mode dégradé |
+
+Ce que le cas montre : [E5] et le § 12. Les demandes étant traitées en concurrence, le lot dure environ 3 s, et non 6 s ; la demande sans indicateur n'attend jamais le partenaire.
+
 ## Points ouverts
 
 | Point | Pourquoi il reste ouvert | Qui tranche |

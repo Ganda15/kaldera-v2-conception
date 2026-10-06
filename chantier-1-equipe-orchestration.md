@@ -263,6 +263,66 @@ Le partenaire peut être lent, en panne ou répondre de manière non conforme : 
 
 Le filtre des données sortantes, la validation des réponses du partenaire et le mode dégradé sont traités au [chantier 2](chantier-2-a2a-epreuve.md).
 
+## 7. Cas d'usage : quatre demandes suivies de bout en bout
+
+Chaque cas est un scénario de `eval/scenarios.jsonl`. Une étape est une délégation de la Coordination, soit une ligne de trace.
+
+### Cas 1 : une pièce manquante, puis déposée (NOM-07, KAL-26-0107)
+
+Situation : formule premium, dégât des eaux du 2 août 2026 déclaré le lendemain, 2 300 € déclarés ; facture lisible, photo absente ; l'assuré dépose une photo lisible après la demande de complément.
+
+| Étape | Agent | Écrit | Résultat |
+|---|---|---|---|
+| 1 | eligibilite | eligibilite | éligible : les cinq conditions sont remplies |
+| 2 | pieces | pieces | photo manquante |
+| 3 | pieces, sur délégation de la Coordination | pieces (réécrite) | complément adressé, photo déposée, pièces complètes |
+| 4 | estimation | estimation | justifié 2 300 €, franchise 0 €, estimé 2 300 € |
+| 5 | antifraude | avis_fraude | aucun indicateur F1 à F4 : avis non requis, aucun appel |
+| 6 | coordination | issue | règles 1 à 5 non applicables, règle 6 : acceptée |
+
+Issue : décision acceptée, 2 300 € remboursés, sans avis ni mode dégradé. Ce que le cas montre : la boucle de complément, la réécriture de `pieces` par son seul propriétaire, la décision du complément par la Coordination après l'éligibilité.
+
+### Cas 2 : un contrat résilié (NOM-02, KAL-26-0102)
+
+Situation : formule essentiel, contrat au statut `resilie`, incendie de 2 400 € avec facture et photo.
+
+| Étape | Agent | Écrit | Résultat |
+|---|---|---|---|
+| 1 | eligibilite | eligibilite | non éligible : condition E1 (contrat actif) non remplie |
+| 2 | pieces | pieces | pièces complètes (contrôle mené en parallèle) |
+| 3 | coordination | issue | règle 1 : refusée |
+
+Issue : décision refusée, 0 €, le motif cite la condition E1. Ce que le cas montre : l'arrêt anticipé ; ni estimation, ni appel au partenaire, ni sollicitation de l'assuré.
+
+### Cas 3 : le point ambigu, le plafond (NOM-05, KAL-26-0105)
+
+Situation : formule essentiel (franchise 300 €, plafond 3 000 €), dégât des eaux de 4 200 € avec facture et photo.
+
+| Étape | Agent | Écrit | Résultat |
+|---|---|---|---|
+| 1 | eligibilite | eligibilite | éligible |
+| 2 | pieces | pieces | pièces complètes |
+| 3 | estimation | estimation | retenu 4 200 €, moins 300 € = 3 900 €, plafonné à 3 000 € |
+| 4 | antifraude | avis_fraude | aucun indicateur (4 200 € < 5 000 €) : avis non requis |
+| 5 | coordination | issue | règle 6 : acceptée |
+
+Issue : décision acceptée, 3 000 € remboursés. Ce que le cas montre : le plafond appliqué par l'Estimation, jamais par l'Éligibilité.
+
+### Cas 4 : le piège à boucle (BCL-01, KAL-26-0601)
+
+Situation : formule confort, dégât des eaux de 1 400 € ; la facture est illisible, et le seul dépôt de l'assuré est une facture tout aussi illisible.
+
+| Étape | Agent | Écrit | Résultat |
+|---|---|---|---|
+| 1 | eligibilite | eligibilite | éligible |
+| 2 | pieces | pieces | facture illisible |
+| 3 | pieces, sur délégation de la Coordination | pieces (réécrite) | complément adressé, nouveau dépôt illisible : même état qu'à l'étape 2 |
+| 4 | coordination | issue | borne « même état vu deux fois » : escalade gestionnaire |
+
+Issue : escalade, `arret` renseigné avec le nom de la borne, trace de 4 étapes. Ce que le cas montre : la boucle arrêtée par une borne, jamais un blocage silencieux.
+
+Les cas d'usage de la liaison avec le partenaire (avis faible, avis modéré, réponse écartée, partenaire lent) sont au [chantier 2, section 10](chantier-2-a2a-epreuve.md).
+
 ## Points ouverts
 
 | Point | Pourquoi il reste ouvert | Qui tranche |
