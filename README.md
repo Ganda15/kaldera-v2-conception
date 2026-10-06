@@ -53,21 +53,20 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 - [x] Documents du formateur reçus le 06/10/2026 : `docs/specs_metier.md`, `docs/interface.md`, `eval/scenarios.jsonl`, `external_agent/contrat.md`
 - [ ] Tests d'acceptance (`tests/acceptance/`) et pilote du partenaire simulé (`scripts/partner_ctl.py`) : cités par `interface.md`, pas encore reçus
 - [x] Réponses du chantier 1, fondées sur les documents reçus ; points ouverts listés en fin de chantier
-- [ ] Réponses du chantier 2
+- [x] Réponses du chantier 2, fondées sur le contrat du partenaire (version 2.0) et les 28 scénarios ; points ouverts listés en fin de chantier
 - [x] Schémas du chantier 1 : arbre de décision, carte des agents, orchestration, mémoire partagée (fondés sur les documents reçus ; bornes provisoires)
-- [x] Schémas du chantier 2 : arbre de décision de la liaison, échange A2A et mode dégradé, plan d'épreuve (proposition provisoire)
+- [x] Schémas du chantier 2 : arbre de décision de la liaison, échange A2A et mode dégradé, plan d'épreuve (fondés sur le contrat du partenaire)
 - [ ] Dossier validé par le formateur, avant tout code
 
 ## Questions pour le formateur
 
-1. Où trouver `specs_metier.md`, `eval/scenarios.jsonl` et les tests d'acceptance ?
-2. Le partenaire anti-fraude est-il fourni sous forme de bouchon, ou faut-il le simuler ?
-3. Quelle version du protocole A2A le partenaire suit-il : 0.3.0 ou 1.0.0 ?
-4. Le contrat réel du partenaire est-il fourni (champs, délais, règles de relance, fréquence de consultation) ?
-5. La pile technique est-elle libre ? Un composant à base de règles compte-t-il comme un agent ?
-6. Les demandes déjà bloquées depuis des semaines font-elles partie du périmètre ?
-7. Les questions guides des deux chantiers sont vides sur la page du brief : sont-elles à venir ?
-8. Quelles sont les échéances du dossier de conception et du code ?
+1. Quand recevrons-nous les tests d'acceptance (`tests/acceptance/`) ? `specs_metier.md` et `eval/scenarios.jsonl` ont été reçus le 06/10.
+2. Le partenaire simulé et son pilote `scripts/partner_ctl.py`, cités par `interface.md`, seront-ils fournis ?
+3. La pile technique est-elle libre ? Un composant à base de règles compte-t-il comme un agent ?
+4. Les demandes déjà bloquées depuis des semaines font-elles partie du périmètre ?
+5. Quelles sont les échéances du dossier de conception et du code ?
+
+Questions résolues par les documents du 06/10 : la version du protocole (format 0.3.0, voir le chantier 2, section 3), le contrat réel du partenaire (`external_agent/contrat.md`, version 2.0) et les questions guides des deux chantiers.
 
 ## Sources
 
