@@ -1,205 +1,231 @@
 # Schémas du chantier 1 de Kaldera V2 : arbre de décision, carte des agents, orchestration, mémoire partagée.
+# Version fondée sur docs/specs_metier.md (v3.2) et docs/interface.md, reçus le 06/10/2026.
 # Palette, styles et classe Schema : schema_commun.py.
 
 from schema_commun import *  # noqa: F403 (palette, styles, Schema, arbre_de_decision)
 
 ROUGE_TXT = f'<font color="{ROUGE}"><b>Interdit :</b> '
 FIN = "</font>"
+CENTRE = "align=center;verticalAlign=middle;spacingLeft=0;"
 
 # =============================================================================================================
 # Schéma 1 : la carte des agents
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Carte des agents · Chantier 1", 30, 20, 1000, 30, S_TITRE)
-s.box("st", "Rôles, frontières, point ambigu tranché, dépendances et parallélisme. "
-            "Proposition provisoire, à confirmer avec specs_metier.md.", 30, 54, 1100, 22, S_SOUS)
+s.box("st", "Rôles, frontières, point ambigu tranché, dépendances et parallélisme. Fondé sur specs_metier.md (v3.2) "
+            "et interface.md : une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section.",
+      30, 54, 1300, 22, S_SOUS)
 
-s.box("orch", "<b>Orchestrateur</b> (code, sans LLM)<br>"
-              "Délègue chaque étape, applique les bornes, écrit le statut final.<br>"
-              + ROUGE_TXT + "refaire un contrôle métier (éligibilité, pièces, montant, fraude)." + FIN,
-      400, 95, 640, 78, S_ORCH)
+s.box("orch", "<b>Coordination</b> (code, sans LLM) · <b>écrit : issue</b><br>"
+              "Délègue chaque contrôle, vérifie les bornes, applique les règles de décision dans l'ordre (spec § 10), "
+              "conclut la demande. Seule à conclure.<br>"
+              + ROUGE_TXT + "refaire un contrôle (éligibilité, pièces, montant, fraude)." + FIN,
+      380, 95, 700, 82, S_ORCH)
 
-s.box("par", "Exécutées en parallèle : aucune n'a besoin du résultat de l'autre", 30, 225, 440, 400, S_GROUPE)
-s.box("elig", "<b>Éligibilité</b> (règles en code)<br><br>"
-              "Vérifie que le contrat couvre la demande.<br>"
-              "Renvoie : éligible oui ou non, avec le motif.<br><br>"
-              + ROUGE_TXT + "calculer un montant, juger les pièces, juger la fraude." + FIN,
-      50, 260, 400, 150, S_AGENT)
-s.box("pieces", "<b>Pièces justificatives</b> (code, LLM pour lire le texte libre)<br><br>"
-                "Vérifie que les pièces exigées sont présentes et cohérentes.<br>"
-                "Renvoie : complet oui ou non, pièces manquantes, incohérences constatées.<br><br>"
-                + ROUGE_TXT + "conclure à la fraude ; il constate une incohérence, il ne la qualifie pas." + FIN,
-      50, 435, 400, 170, S_AGENT)
-s.box("estim", "<b>Estimation</b> (règles en code)<br><br>"
-               "Calcule le montant à rembourser, plafond et franchise compris.<br>"
-               "Renvoie : le montant et le détail du calcul.<br><br>"
+s.box("par", "Exécutés en parallèle : aucun n'a besoin du résultat de l'autre", 30, 225, 440, 420, S_GROUPE)
+s.box("elig", "<b>Éligibilité</b> (règles en code) · <b>écrit : eligibilite</b><br><br>"
+              "Vérifie E1 à E5 : contrat actif, cotisations, carence de 30 jours, délai de déclaration, garantie de la formule.<br>"
+              "Renvoie : éligible oui ou non, conditions non remplies.<br><br>"
+              + ROUGE_TXT + "chiffrer la demande, appliquer le plafond, juger les pièces ou la fraude." + FIN,
+      50, 255, 400, 175, S_AGENT)
+s.box("pieces", "<b>Pièces justificatives</b> (code) · <b>écrit : pieces</b><br><br>"
+                "Vérifie présence, lisibilité et cohérence des pièces exigées. Demande un complément via l'espace assuré "
+                "(seulement si la demande est éligible).<br>"
+                "Renvoie : complet, ou manquantes ; les factures lisibles.<br><br>"
+                + ROUGE_TXT + "conclure ou escalader la demande, chiffrer, juger la fraude." + FIN,
+      50, 445, 400, 185, S_AGENT)
+s.box("estim", "<b>Estimation</b> (règles en code) · <b>écrit : estimation</b><br><br>"
+               "Montant justifié (factures lisibles), montant retenu (le plus petit des deux), "
+               "moins la franchise, puis <b>plafond de la formule</b>.<br>"
+               "Renvoie : montant justifié et montant estimé.<br><br>"
                + ROUGE_TXT + "juger la fraude, revenir sur l'éligibilité." + FIN,
-      540, 300, 340, 170, S_AGENT)
-s.box("fraude", "<b>Fraude, liaison avec le partenaire</b> (code)<br><br>"
-                "Tourne à chaque demande : décide s'il y a suspicion. Si oui seulement, interroge le partenaire et contrôle sa réponse.<br>"
-                "Renvoie : pas de suspicion, verdict validé, réponse rejetée ou partenaire indisponible.<br><br>"
-                + ROUGE_TXT + "rendre lui-même un verdict de fraude, envoyer une donnée hors contrat." + FIN,
-      950, 280, 380, 210, S_AGENT)
+      540, 255, 360, 200, S_AGENT)
+s.box("fraude", "<b>Anti-fraude, liaison avec le partenaire</b> (code) · <b>écrit : avis_fraude</b><br><br>"
+                "Calcule les indicateurs F1 à F4. Si au moins un : un seul appel au partenaire, puis contrôle de sa réponse.<br>"
+                "Renvoie : non requis, avis (niveau et score), ou indisponible.<br><br>"
+                + ROUGE_TXT + "émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel." + FIN,
+      1030, 255, 360, 220, S_AGENT)
 s.box("partenaire", "<b>Partenaire anti-fraude</b> (agent A2A externe)<br>"
-                    "Contrat, filtre des données et mode dégradé : chantier 2",
-      1000, 610, 300, 70, S_EXT)
+                    "rend l'avis : faible, modéré ou élevé · contrat, filtre et mode dégradé : chantier 2",
+      1045, 600, 330, 80, S_EXT)
 
-s.box("ambig", "<b>Point ambigu tranché : qui déclare une suspicion de fraude ?</b><br><br>"
-               "Seul l'agent Fraude. Pièces et Estimation lui transmettent des faits (une incohérence, un montant), "
-               "jamais le mot « fraude ». Le partenaire rend le verdict ; l'agent Fraude décide seulement s'il faut le demander.<br><br>"
-               "<i>Raison : le brief interdit déjà à l'estimation de juger la fraude ; un seul propriétaire donne "
-               "une seule liste de critères à tester et une seule porte vers le partenaire.</i>",
-      500, 560, 440, 190, S_AMBIG)
-s.box("autres", "<b>Deux autres frontières tranchées</b><br>"
-                "• Plafond du contrat : Estimation, car il fait partie du calcul du montant.<br>"
-                "• Pièces manquantes : constatées par Pièces ; le statut est décidé par l'orchestrateur, avec sa table de décision.",
-      30, 660, 440, 100, S_NOTE)
+s.box("ambig", "<b>Point ambigu tranché : qui applique le plafond ?</b><br><br>"
+               "La spec range le plafond dans l'éligibilité (§ 4), mais « le contrôle d'éligibilité ne chiffre pas » (§ 2), "
+               "et l'estimation (§ 6) ne le cite pas. <b>Choix : l'Estimation</b>, parce que le plafond est un calcul de montant.<br><br>"
+               "<i>Preuve, scénario NOM-05 : 4 200 € déclarés, moins 300 € de franchise = 3 900 €, plafonnés à 3 000 €.</i>",
+      500, 560, 460, 190, S_AMBIG)
+s.box("autres", "<b>Autres frontières tranchées</b><br>"
+                "• Pièces manquantes : constatées par Pièces ; l'escalade est décidée par la Coordination (règle 2).<br>"
+                "• Montant justifié : calculé par l'Estimation (§ 6), à partir des factures lisibles fournies par Pièces.<br>"
+                "• Indicateurs F1 à F4 : Anti-fraude, après l'Estimation, car F4 compare le montant déclaré au montant justifié.",
+      30, 670, 440, 130, S_NOTE)
 
-# délégations (pointillé vert)
-s.edge("d1", "orch", "elig", E_DELEG, "délègue", [(451, 200), (410, 200)], sortie=(0.08, 1), entree=(0.9, 0))
-s.edge("d2", "orch", "estim", E_DELEG, "délègue", sortie=(0.3, 1), entree=(0.5, 0))
-s.edge("d3", "orch", "fraude", E_DELEG, "délègue", [(980, 230), (1140, 230)], sortie=(0.9, 1), entree=(0.5, 0))
-# dépendances de données (trait plein)
-s.edge("p1", "elig", "estim", E_DEP, "éligible = oui", sortie=(1, 0.5), entree=(0, 0.35))
-s.edge("p2", "pieces", "estim", E_DEP, "pièces complètes", [(495, 500), (495, 420)], sortie=(1, 0.38), entree=(0, 0.7))
-s.edge("p3", "estim", "fraude", E_DEP, "montant (un fait)", sortie=(1, 0.5), entree=(0, 0.55))
-# fait transmis à Fraude (pointillé orange)
-s.edge("f1", "pieces", "fraude", E_FAIT, "incohérences constatées (des faits)", [(480, 590), (480, 530), (1000, 530)],
-       sortie=(1, 0.89), entree=(0.13, 1))
-# partenaire (gris, chantier 2)
-s.edge("x1", "fraude", "partenaire", E_EXT, "seulement si suspicion", sortie=(0.45, 1), entree=(0.4, 0))
-s.edge("x2", "partenaire", "fraude", E_EXT, "verdict à valider", [(1250, 560)], sortie=(0.83, 0), entree=(0.79, 1))
+s.edge("d1", "orch", "elig", E_DELEG, "délègue", [(420, 205), (410, 205)], sortie=(0.06, 1), entree=(0.9, 0))
+s.edge("d2", "orch", "estim", E_DELEG, "délègue", sortie=(0.4, 1), entree=(0.5, 0))
+s.edge("d3", "orch", "fraude", E_DELEG, "délègue", [(1000, 215), (1210, 215)], sortie=(0.89, 1), entree=(0.5, 0))
+s.edge("p1", "pieces", "estim", E_DEP, "factures lisibles", [(495, 540), (495, 400)], sortie=(1, 0.5), entree=(0, 0.6))
+s.edge("p2", "estim", "fraude", E_DEP, "montant justifié (pour F4)", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("x1", "fraude", "partenaire", E_EXT, "si au moins un indicateur", sortie=(0.4, 1), entree=(0.4, 0))
+s.edge("x2", "partenaire", "fraude", E_EXT, "avis à contrôler", [(1325, 560)], sortie=(0.85, 0), entree=(0.81, 1))
 
-s.legende([(VERT, "Code (orchestration)"), (BLEU, "Agent spécialiste"), (ORANGE, "Point ambigu tranché"),
-           (ROUGE, "Frontière : interdit"), (GRIS, "Externe ou chantier 2")], 30, 800)
-s.box("lg2", "Trait plein : dépendance de données · pointillé vert : délégation · pointillé orange : fait transmis à Fraude",
-      30, 836, 900, 20, S_SOUS)
-s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1360, 870)
+s.legende([(VERT, "Code (coordination)"), (BLEU, "Agent de contrôle"), (ORANGE, "Point ambigu tranché"),
+           (ROUGE, "Frontière : interdit"), (GRIS, "Externe ou chantier 2")], 30, 830)
+s.box("lg2", "Trait plein : dépendance de données · pointillé vert : délégation · « écrit » : la seule section métier de l'agent",
+      30, 866, 900, 20, S_SOUS)
+s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1420, 900)
 
 # =============================================================================================================
 # Schéma 2 : l'orchestration et la terminaison garantie
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Orchestration et terminaison garantie · Chantier 1", 30, 20, 1100, 30, S_TITRE)
-s.box("st", "Délégations, conditions d'arrêt et bornes provisoires. Chaque chemin finit par une décision "
-            "ou par une escalade humaine motivée.", 30, 54, 1100, 22, S_SOUS)
+s.box("st", "Chaque losange est une règle de décision appliquée par la Coordination, dans l'ordre de la spec (§ 10) ; "
+            "la première qui s'applique fixe l'issue. Chaque chemin finit par une décision ou par une escalade motivée.",
+      30, 54, 1300, 22, S_SOUS)
 
-s.box("deleg", "Chaque flèche est une transition décidée par l'orchestrateur (code). "
-               "Les agents ne s'appellent jamais entre eux. L'état est sauvegardé après chaque étape.",
-      560, 100, 440, 60, S_NOTE)
-s.box("s0", "<b>Demande reçue</b><br>état créé et sauvegardé", 170, 95, 320, 52, S_ORCH + "align=center;spacingLeft=0;")
-s.box("par", "En parallèle", 40, 182, 580, 110, S_GROUPE)
-s.box("e", "<b>Éligibilité</b>", 60, 215, 250, 55, S_AGENT + "align=center;verticalAlign=middle;spacingLeft=0;")
-s.box("p", "<b>Pièces justificatives</b>", 350, 215, 250, 55, S_AGENT + "align=center;verticalAlign=middle;spacingLeft=0;")
-s.box("d1", "Refus bloquant ?", 230, 325, 200, 100, S_LOSANGE)
-s.box("crit", "Refus bloquant : non éligible, ou pièces manquantes si specs_metier.md le prévoit (à confirmer).",
-      560, 330, 330, 60, S_AMBIG + "fontSize=11;")
-s.box("est", "<b>Estimation</b>", 180, 475, 300, 55, S_AGENT + "align=center;verticalAlign=middle;spacingLeft=0;")
-s.box("d2", "Agent Fraude :<br>suspicion ?", 230, 570, 200, 100, S_LOSANGE)
-s.box("part", "<b>Appel au partenaire A2A</b><br>chantier 2", 560, 590, 280, 60, S_EXT)
-s.box("deg", "<b>Mode dégradé</b> défini par specs_metier.md<br>chantier 2", 560, 715, 280, 60, S_EXT)
-s.box("tab", "<b>Table de décision</b><br>orchestrateur, code", 180, 800, 300, 60, S_ORCH + "align=center;spacingLeft=0;")
+FIN_REF = S_FIN_OK + CENTRE + "fontSize=11;"
+FIN_ESC = S_FIN_ESC + CENTRE + "fontSize=11;"
+s.box("s0", "<b>Demande reçue</b><br>état créé, section demande en lecture seule", 120, 95, 300, 52, S_ORCH + CENTRE)
+s.box("par", "En parallèle", 30, 172, 520, 100, S_GROUPE)
+s.box("e", "<b>Éligibilité</b><br>E1 à E5", 50, 200, 230, 55, S_AGENT + CENTRE)
+s.box("p", "<b>Pièces</b><br>présence, lisibilité", 300, 200, 230, 55, S_AGENT + CENTRE)
 
-s.box("acc", "<b>DÉCISION : ACCEPTÉE</b><br>montant fixé par l'Estimation", 40, 950, 260, 64, S_FIN_OK)
-s.box("ref", "<b>DÉCISION : REFUSÉE</b><br>avec le motif", 360, 950, 260, 64, S_FIN_OK)
-s.box("esc", "<b>ESCALADE HUMAINE MOTIVÉE</b><br>motif · étape atteinte · données disponibles · tentatives faites",
-      700, 940, 340, 84, S_FIN_ESC)
+s.box("r1", "Éligible ?", 160, 300, 220, 90, S_LOSANGE)
+s.box("t1", "<b>DÉCISION : REFUSÉE</b> · règle 1<br>0 € ; le motif cite les conditions non remplies", 480, 315, 340, 60, FIN_REF)
 
-s.box("bornes", "<b>Bornes provisoires</b><br>vérifiées par l'orchestrateur avant chaque délégation<br><br>"
-                "• Étapes par demande : 10 au plus<br>&nbsp;&nbsp;&nbsp;(le chemin le plus long prévu en compte 7)<br>"
-                "• Appels par agent : 2 au plus<br>&nbsp;&nbsp;&nbsp;(1 essai, puis 1 relance si exception, sortie invalide ou délai dépassé)<br>"
+s.box("r2", "Pièces exigées<br>présentes et lisibles ?", 160, 420, 220, 100, S_LOSANGE)
+s.box("c", "<b>Pièces : demande de complément</b> (2 au plus)<br>via l'espace assuré, puis nouveau contrôle", 480, 440, 340, 60, S_AGENT + CENTRE)
+s.box("t2", "<b>ESCALADE gestionnaire</b> · règle 2<br>motif : pièces manquantes", 880, 440, 300, 60, FIN_ESC)
+
+s.box("est", "<b>Estimation</b><br>justifié, retenu, franchise, plafond", 120, 560, 300, 58, S_AGENT + CENTRE)
+s.box("r3", "Montant estimé<br>nul ?", 160, 650, 220, 90, S_LOSANGE)
+s.box("t3", "<b>DÉCISION : REFUSÉE</b> · règle 3<br>0 € ; dommage inférieur ou égal à la franchise", 480, 665, 340, 60, FIN_REF)
+
+s.box("r4", "Anti-fraude :<br>un indicateur F1 à F4 ?", 160, 775, 220, 100, S_LOSANGE)
+s.box("pa", "<b>Avis du partenaire</b> (chantier 2)<br>un seul appel, 3 s au plus, aucune relance", 480, 795, 340, 60, S_EXT)
+s.box("t4a", "<b>ESCALADE gestionnaire</b> · avis modéré<br>motif : contrôle renforcé", 880, 745, 300, 56, FIN_ESC)
+s.box("t4b", "<b>ESCALADE cellule_fraude</b> · avis élevé<br>motif : suspicion de fraude", 880, 815, 300, 56, FIN_ESC)
+s.box("deg", "<b>Avis indisponible : mode dégradé</b> (§ 9)<br>délai dépassé, erreur ou réponse non conforme", 480, 905, 340, 60, S_EXT)
+s.box("t4c", "<b>ESCALADE cellule_fraude</b><br>montant estimé &gt; 1 500 €, mode dégradé", 880, 905, 300, 56, FIN_ESC)
+
+s.box("r5", "Montant estimé<br>&gt; 10 000 € ?", 160, 1010, 220, 90, S_LOSANGE)
+s.box("t5", "<b>ESCALADE gestionnaire</b> · règle 5<br>motif : seuil de délégation dépassé", 480, 1025, 340, 60, FIN_ESC)
+s.box("t6", "<b>DÉCISION : ACCEPTÉE</b> · règle 6<br>montant remboursé = montant estimé", 120, 1140, 300, 60, FIN_REF)
+
+s.box("bornes", "<b>Bornes provisoires</b><br>vérifiées par la Coordination avant chaque délégation<br><br>"
+                "• Durée par demande : <b>10 s</b> (engagement de service, spec § 12)<br>"
+                "• Étapes par demande : <b>8</b> au plus<br>&nbsp;&nbsp;&nbsp;(chemin nominal : 5 ; plus 2 compléments ; plus 1 de marge)<br>"
+                "• Demandes de complément : <b>2</b> au plus<br>"
                 "• Même état vu deux fois : arrêt immédiat<br>"
-                "• Délai global par demande : 120 s<br>"
-                "• Budget LLM par demande : fixé après mesure du cas nominal<br><br>"
-                "<i>Valeurs de départ. Le plan d'épreuve du chantier 2 les confirme ou les ajuste ; "
-                "chaque changement entre au journal des ajustements.</i>",
-      1080, 100, 400, 240, S_AMBIG + "fillColor=#fff2cc;strokeColor=#bf9000;arcSize=4;")
+                "• Délai par contrôle interne : 1 s · appel au partenaire : 3 s (contrat § 5)<br><br>"
+                "<b>Borne atteinte</b> : ESCALADE gestionnaire, et la fiche le signale dans <i>arret</i> (nom de la borne).<br><br>"
+                "<i>Fondées sur le chemin le plus long prévu par la spec et les scénarios ; "
+                "le chantier 2 les éprouve (BCL-01, PAN-02), chaque changement entre au journal des ajustements.</i>",
+      1240, 95, 400, 330, S_AMBIG + "fillColor=#fff2cc;strokeColor=#bf9000;arcSize=4;")
+s.box("qui", "<b>Qui décide que la demande est terminée ?</b><br>"
+             "La Coordination seule, en écrivant la section issue (« seule la décision conclut la demande », § 2). "
+             "Aucun autre état final : jamais « en attente » sans qu'un humain en soit saisi.",
+      1240, 450, 400, 110, S_NOTE)
+s.box("comp", "<b>Pourquoi le complément après l'éligibilité ?</b><br>"
+              "Une demande non éligible est refusée quel que soit l'état de ses pièces (règle 1) : "
+              "inutile de solliciter l'assuré.", 1240, 585, 400, 90, S_NOTE)
 
-s.edge("a1", "s0", "e", E_DELEG, "délègue", [(330, 168), (185, 168)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a2", "s0", "p", E_DELEG, "délègue", [(330, 168), (475, 168)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a3", "e", "d1", E_DEP, "", [(185, 305), (330, 305)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a4", "p", "d1", E_DEP, "", [(475, 305), (330, 305)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a5", "d1", "est", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a6", "d1", "tab", E_DEP, "oui : arrêt anticipé", [(140, 375), (140, 830)], sortie=(0, 0.5), entree=(0, 0.5))
-s.edge("a6b", "d1", "crit", E_FAIT, "", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("a7", "est", "d2", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a8", "d2", "tab", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a9", "d2", "part", E_EXT, "oui", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("a10", "part", "tab", E_EXT, "verdict validé", [(588, 700), (450, 700)], sortie=(0.1, 1), entree=(0.9, 0))
-s.edge("a11", "part", "deg", E_EXT, "indisponible, trop lent ou réponse rejetée", sortie=(0.6, 1), entree=(0.6, 0))
-s.edge("a12", "deg", "tab", E_EXT, "la demande continue", [(520, 745), (520, 836)], sortie=(0, 0.5), entree=(1, 0.6))
-s.edge("a13", "deg", "esc", E_ESC, "la demande est routée", sortie=(0.85, 1), entree=(0.55, 0))
-s.edge("a14", "tab", "acc", E_OK, "", [(240, 905), (170, 905)], sortie=(0.2, 1), entree=(0.5, 0))
-s.edge("a15", "tab", "ref", E_OK, "", [(360, 905), (490, 905)], sortie=(0.6, 1), entree=(0.5, 0))
-s.edge("a16", "tab", "esc", E_ESC, "selon la table", [(450, 920), (980, 920)], sortie=(0.9, 1), entree=(0.82, 0))
-s.edge("a17", "bornes", "esc", E_ESC, "borne atteinte, ou agent en échec après sa relance",
-       [(1280, 982)], sortie=(0.5, 1), entree=(1, 0.5))
+s.edge("a1", "s0", "e", E_DELEG, "délègue", [(270, 165), (165, 165)], sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("a2", "s0", "p", E_DELEG, "délègue", [(270, 165), (415, 165)], sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("a3", "e", "r1", E_DEP, "", [(165, 285), (270, 285)], sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("a4", "p", "r1", E_DEP, "", [(415, 285), (270, 285)], sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b1", "r1", "t1", E_OK, "non", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b2", "r1", "r2", E_DEP, "oui", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b3", "r2", "c", E_DEP, "non", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b4", "c", "r2", E_DEP, "nouveau dépôt", [(650, 530), (330, 530)], sortie=(0.5, 1), entree=(0.77, 0.9))
+s.edge("b5", "c", "t2", E_ESC, "aucun dépôt du type", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b6", "r2", "est", E_DEP, "oui", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b7", "est", "r3", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b8", "r3", "t3", E_OK, "oui", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b9", "r3", "r4", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b10", "r4", "pa", E_EXT, "oui", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b11", "pa", "t4a", E_ESC, "modéré", [(850, 815), (850, 773)], sortie=(1, 0.33), entree=(0, 0.5))
+s.edge("b12", "pa", "t4b", E_ESC, "élevé", sortie=(1, 0.75), entree=(0, 0.5))
+s.edge("b13", "pa", "deg", E_EXT, "indisponible", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b14", "deg", "t4c", E_ESC, "> 1 500 €", sortie=(1, 0.5), entree=(0, 0.5))
+# point de jonction sur l'axe : la demande poursuit vers la règle 5
+s.box("j", "", 264, 974, 12, 12, "ellipse;fillColor=#333333;strokeColor=#333333;")
+s.edge("b15", "deg", "j", E_EXT, "", [(650, 980)], sortie=(0.5, 1), entree=(1, 0.5))
+s.edge("b16", "pa", "j", E_EXT, "", [(440, 846), (440, 980)], sortie=(0, 0.85), entree=(1, 0.5))
+LIB = "text;html=1;fontFamily=Arial;fontSize=11;fontColor=#555555;align=center;verticalAlign=middle;whiteSpace=wrap;"
+s.box("lb16", "faible : poursuit", 300, 900, 130, 20, LIB)
+s.box("lb15", "≤ 1 500 € : continue, marquée mode dégradé", 470, 986, 350, 18, LIB)
+s.edge("b17", "r4", "j", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b17b", "j", "r5", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b18", "r5", "t5", E_ESC, "oui", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("b19", "r5", "t6", E_OK, "non", sortie=(0.5, 1), entree=(0.5, 0))
 
-s.legende([(VERT, "Décision de l'orchestrateur"), (BLEU, "Étape déléguée"), (OK, "Fin : décision"),
-           (ESC, "Fin : escalade humaine"), (GRIS, "Chantier 2"), (ORANGE, "À confirmer")], 30, 1060)
-s.ecrire("schema-2-orchestration", "Orchestration et terminaison", 1510, 1100)
+s.legende([(VERT, "Règle de la Coordination"), (BLEU, "Contrôle délégué"), (OK, "Fin : décision"),
+           (ESC, "Fin : escalade"), (GRIS, "Chantier 2"), (ORANGE, "Bornes provisoires")], 30, 1240)
+s.ecrire("schema-2-orchestration", "Orchestration et terminaison", 1670, 1290)
 
 # =============================================================================================================
 # Schéma 3 : la mémoire partagée de la demande
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Mémoire partagée de la demande · Chantier 1", 30, 20, 1100, 30, S_TITRE)
-s.box("st", "Un état par demande, sauvegardé après chaque étape. Chaque section a un seul propriétaire, "
-            "et l'orchestrateur est le seul à écrire.", 30, 54, 1100, 22, S_SOUS)
+s.box("st", "Un état par demande. Chaque agent écrit sa seule section métier, une seule fois ; la trace enregistre "
+            "qui a écrit quoi (interface.md).", 30, 54, 1200, 22, S_SOUS)
 
-s.box("orch", "<b>Orchestrateur : le seul à écrire</b><br>"
-              "1. reçoit le résultat d'un agent · 2. le valide contre le schéma de sortie de cet agent · "
-              "3. l'écrit dans la section de cet agent, et nulle part ailleurs · 4. ajoute l'événement au journal · 5. sauvegarde l'état",
-      430, 92, 640, 78, S_ORCH)
+s.box("agents", "Agents : chacun écrit sa section, lit seulement ce dont il a besoin", 30, 100, 400, 640, S_GROUPE)
+AG = S_AGENT + "fontSize=11;"
+s.box("ae", "<b>Éligibilité</b><br>lit : demande (contrat, sinistre)", 50, 210, 360, 56, AG)
+s.box("ap", "<b>Pièces</b><br>lit : demande (pièces, espace assuré)", 50, 282, 360, 56, AG)
+s.box("aes", "<b>Estimation</b><br>lit : demande, pieces (factures lisibles)", 50, 354, 360, 56, AG)
+s.box("af", "<b>Anti-fraude</b><br>lit : demande, estimation (montant justifié)<br>"
+            f'<font color="{ROUGE}">ne lit pas : pieces (contenu des pièces)</font>', 50, 426, 360, 64, AG)
+s.box("ac", "<b>Coordination</b><br>lit : toutes les sections · écrit : issue, controle, trace", 50, 506, 360, 56,
+      S_ORCH + "fontSize=11;")
 
-s.box("agents", "Agents spécialistes : lecture seule, sections utiles seulement", 30, 230, 350, 560, S_GROUPE)
-s.box("ae", "<b>Éligibilité</b><br>lit : demande", 50, 270, 310, 60, S_AGENT)
-s.box("ap", "<b>Pièces justificatives</b><br>lit : demande", 50, 350, 310, 60, S_AGENT)
-s.box("aes", "<b>Estimation</b><br>lit : demande, eligibilite, pieces<br>"
-             f'<font color="{ROUGE}">ne lit pas : fraude</font>', 50, 430, 310, 80, S_AGENT)
-s.box("af", "<b>Fraude</b><br>lit : demande, pieces (incohérences), estimation (montant)", 50, 530, 310, 70, S_AGENT)
-s.box("apar", "Éligibilité et Pièces tournent en parallèle sans conflit : chacune a sa section, et un seul écrivain.",
-      50, 620, 310, 70, S_NOTE)
-
-s.box("etat", "État de la demande · claim_id", 430, 230, 640, 560, S_CONTENEUR)
-SEC_NEUTRE = BASE + GAUCHE + "rounded=0;fillColor=#ffffff;strokeColor=#999999;"
-SEC_AGENT = BASE + GAUCHE + f"rounded=0;fillColor=#cfe2f3;strokeColor={BLEU};"
-SEC_ORCH = BASE + GAUCHE + f"rounded=0;fillColor=#d9ead3;strokeColor={VERT};"
+s.box("etat", "État de la demande · reference (KAL-AA-NNNN)", 480, 100, 600, 640, S_CONTENEUR)
+SEC_NEUTRE = BASE + GAUCHE + "rounded=0;fillColor=#ffffff;strokeColor=#999999;fontSize=11;"
+SEC_AGENT = BASE + GAUCHE + f"rounded=0;fillColor=#cfe2f3;strokeColor={BLEU};fontSize=11;"
+SEC_ORCH = BASE + GAUCHE + f"rounded=0;fillColor=#d9ead3;strokeColor={VERT};fontSize=11;"
 sections = [
-    ("demande", "<b>demande</b> : données reçues<br>écrite à la création, puis en lecture seule · lue par : tous les agents", SEC_NEUTRE),
-    ("eligibilite", "<b>eligibilite</b><br>propriétaire : Éligibilité · lue par : orchestrateur, Estimation", SEC_AGENT),
-    ("pieces", "<b>pieces</b><br>propriétaire : Pièces · lue par : orchestrateur, Estimation, Fraude", SEC_AGENT),
-    ("estimation", "<b>estimation</b><br>propriétaire : Estimation · lue par : orchestrateur, Fraude", SEC_AGENT),
-    ("fraude", "<b>fraude</b> : suspicion, verdict validé, taskId et contextId A2A<br>propriétaire : Fraude · lue par : orchestrateur seulement", SEC_AGENT),
-    ("controle", "<b>controle</b> : étape en cours, compteurs des bornes, statut final, motif d'escalade<br>"
-                 "propriétaire : orchestrateur · lue par : orchestrateur, humain en cas d'escalade", SEC_ORCH),
-    ("journal", "<b>journal</b> : un événement par étape (qui, quoi, quand, durée, résultat), ajout seul<br>"
-                "source des métriques par agent (latence, échecs, recours à l'externe)", SEC_ORCH),
+    ("demande", "<b>demande</b> : la demande reçue (§ 3)<br>écrite à la création, puis en lecture seule", SEC_NEUTRE, 138),
+    ("eligibilite", "<b>eligibilite</b> · écrite par Éligibilité<br>éligible, conditions non remplies", SEC_AGENT, 210),
+    ("pieces", "<b>pieces</b> · écrite par Pièces<br>complet ou manquantes, factures lisibles, compléments demandés", SEC_AGENT, 282),
+    ("estimation", "<b>estimation</b> · écrite par Estimation<br>montant justifié, montant estimé", SEC_AGENT, 354),
+    ("avis_fraude", "<b>avis_fraude</b> · écrite par Anti-fraude<br>non requis, avis (niveau, score, evaluation_id) ou indisponible",
+     SEC_AGENT, 426),
+    ("issue", "<b>issue</b> · écrite par la Coordination, conclut la demande<br>décision ou escalade, montant, motif, file, mode dégradé",
+     SEC_ORCH, 506),
+    ("controle", "<b>controle</b> (hors métier) : compteurs des bornes, arret", SEC_ORCH, 584),
+    ("trace", "<b>trace</b> (hors métier), ajout seul : une étape par ligne<br>agent, sections écrites, action, durée, statut",
+     SEC_ORCH, 648),
 ]
-y = 270
-for sid, texte, style in sections:
-    s.box(sid, texte, 450, y, 600, 60, style)
-    y += 72
+for sid, texte, style, y in sections:
+    s.box(sid, texte, 500, y, 560, 56 if sid not in ("controle",) else 44, style)
 
-s.box("sauve", "<b>Sauvegarde après chaque étape</b><br>reprise après un crash, sans demande oubliée", 1140, 270, 320, 110, S_CYL)
-s.box("front", "<b>La frontière passe aussi par les données</b><br>"
-               "Un agent n'écrit jamais lui-même. L'Estimation ne voit pas la section fraude, "
-               "donc elle ne peut pas s'en servir.", 1140, 410, 340, 84, S_AMBIG)
-s.box("part", "<b>Partenaire anti-fraude</b><br>reçoit seulement les champs du contrat, construits par le filtre (chantier 2)",
-      1140, 548, 320, 80, S_EXT)
-s.box("metr", "<b>Monitorage par agent</b> (chantier 2)<br>calculé à partir du journal", 1140, 702, 320, 60, S_EXT)
+for agent, section in [("ae", "eligibilite"), ("ap", "pieces"), ("aes", "estimation"), ("af", "avis_fraude"), ("ac", "issue")]:
+    s.edge(f"w{agent}", agent, section, E_DEP, "écrit", sortie=(1, 0.5), entree=(0, 0.5))
 
-s.edge("m1", "agents", "orch", E_DEP, "renvoie son résultat, jamais d'écriture directe", [(205, 131)],
-       sortie=(0.5, 0), entree=(0, 0.5))
-s.edge("m2", "orch", "etat", E_DEP, "écrit, après validation", sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("m3", "etat", "agents", E_DELEG + "strokeWidth=2;", "lit", sortie=(0, 0.482), entree=(1, 0.482))
-s.edge("m4", "etat", "sauve", E_OK, "sauvegarde", sortie=(1, 0.125), entree=(0, 0.5))
-s.edge("m5", "fraude", "part", E_EXT, "filtre", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("m6", "journal", "metr", E_EXT, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.box("garde", "<b>Comment un agent n'écrase pas le travail d'un autre</b><br>"
+               "• Une table fixe propriétaire de chaque section ; écrire dans une autre section est refusé (erreur de droits).<br>"
+               "• Chaque section métier est écrite une seule fois.<br>"
+               "• Éligibilité et Pièces tournent en parallèle sans conflit : sections différentes.<br>"
+               "• La trace note l'agent et les sections écrites à chaque étape : la règle se vérifie par un test.",
+      1130, 100, 400, 190, S_AMBIG)
+s.box("vit", "<b>Où vit-elle ?</b><br>En mémoire, un objet par demande, créé au début du traitement. "
+             "Jamais partagé entre deux demandes : le traitement d'une demande n'en retarde pas une autre (§ 12). "
+             "À la fin, la fiche de décision est construite depuis issue, avis_fraude, trace et arret.",
+      1130, 310, 400, 140, S_NOTE)
+s.box("part", "<b>Partenaire anti-fraude</b><br>reçoit seulement les 7 champs du contrat, construits par Anti-fraude (chantier 2)",
+      1130, 470, 400, 70, S_EXT)
+s.box("metr", "<b>Métriques par agent</b> (chantier 2)<br>calculées depuis la trace : appels, échecs, latence, appels externes",
+      1130, 620, 400, 70, S_EXT)
+s.edge("m1", "avis_fraude", "part", E_EXT, "filtre", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("m2", "trace", "metr", E_EXT, "", sortie=(1, 0.5), entree=(0, 0.5))
 
-s.legende([(VERT, "Orchestrateur, seul écrivain"), (BLEU, "Section d'un agent"), (ORANGE, "Frontière par les données"),
-           (ROUGE, "Lecture interdite"), (GRIS, "Externe ou chantier 2")], 30, 820)
-s.ecrire("schema-3-memoire-partagee", "Mémoire partagée", 1490, 860)
+s.legende([(VERT, "Coordination"), (BLEU, "Section d'un agent"), (ORANGE, "Règle d'écriture"),
+           (ROUGE, "Lecture interdite"), (GRIS, "Externe ou chantier 2")], 30, 770)
+s.ecrire("schema-3-memoire-partagee", "Mémoire partagée", 1560, 810)
 
 # =============================================================================================================
 # Schéma 0 : le choix du pattern, arbre de décision
@@ -208,7 +234,7 @@ arbre_de_decision(
     "schema-0-arbre-de-decision", "Arbre de décision du pattern",
     "Kaldera V2 · Choix du pattern agentique : arbre de décision · Chantier 1",
     "Une question métier, puis cinq questions d'architecture posées dans l'ordre ; chaque réponse élimine une option. "
-    "Réponses provisoires, à confirmer avec specs_metier.md.",
+    "Réponses fondées sur specs_metier.md et interface.md.",
     questions=[
         ("q0", "<b>Q0 · métier</b> : le recours à un système agentique est-il justifié, au regard d'un traitement humain ou de règles simples ?", S_QPROD),
         ("q1", "<b>Q1</b> : un seul agent avec 10 à 15 outils suffit-il ?", S_QTECH),
@@ -218,22 +244,28 @@ arbre_de_decision(
         ("q5", "<b>Q5</b> : quelles métriques par agent faut-il rendre visibles ?", S_QTECH),
     ],
     cotes=[
-        ("r0", "<b>Écarté</b> : tout confier à un LLM. L'éligibilité et les plafonds sont des règles, elles restent en code.", S_ECARTE, "écarte"),
-        ("r1", "<b>Écarté</b> : l'agent unique. Ses rôles ne peuvent pas être prouvés séparément (E2) ; c'est le défaut de l'agent actuel.", S_ECARTE, "écarte"),
-        ("r2", "<b>Écarté</b> : un planificateur LLM qui invente les étapes. Le routage se fait par règles, testables et bornables.", S_ECARTE, "écarte"),
-        ("r3", "<b>Retenu</b> : éligibilité et pièces en parallèle, puis regroupement de leurs résultats ; la suite s'enchaîne dans l'ordre.", S_RETENU, "retient"),
-        ("r4", "<b>Écarté</b> : des agents qui se passent la main sans contrôle central ; personne ne garantirait la fin de chaque demande (E1).", S_ECARTE, "écarte"),
-        ("r5", "<b>Ajouté</b> : un journal d'événements à chaque étape, source des métriques par agent (E6).", S_RETENU, "ajoute"),
+        ("r0", "<b>Écarté</b> : confier une règle à un LLM. Éligibilité, pièces, montant, indicateurs et décision sont chiffrés "
+               "(§ 4 à § 10) : ils restent en code. L'avis de fraude vient du partenaire, un agent externe.", S_ECARTE, "écarte"),
+        ("r1", "<b>Écarté</b> : l'agent unique. Ses rôles ne peuvent pas être prouvés séparément ; la trace exige un agent par section.",
+         S_ECARTE, "écarte"),
+        ("r2", "<b>Écarté</b> : un planificateur LLM qui invente les étapes. Le parcours est fixé par la spec (§ 2), "
+               "testable et bornable.", S_ECARTE, "écarte"),
+        ("r3", "<b>Retenu</b> : éligibilité et vérification des pièces en parallèle ; la demande de complément seulement "
+               "si la demande est éligible.", S_RETENU, "retient"),
+        ("r4", "<b>Écarté</b> : des agents qui se passent la main sans contrôle central ; personne ne garantirait l'issue "
+               "de chaque demande, ni les 10 s.", S_ECARTE, "écarte"),
+        ("r5", "<b>Ajouté</b> : une trace à chaque étape (agent, sections écrites), source des métriques par agent.",
+         S_RETENU, "ajoute"),
     ],
-    reponses=["oui, en partie : pour lire le texte libre des pièces", "non",
-              "oui : éligibilité et pièces, puis estimation, fraude, décision", "oui : éligibilité et pièces", "oui",
-              "latence, échecs, appels au partenaire"],
-    final="<b>Pattern retenu</b> : un orchestrateur central écrit en code (pattern superviseur) et quatre agents spécialistes · "
-          "éligibilité et pièces en parallèle · un LLM seulement pour lire le texte libre des pièces · "
-          "un journal d'événements à chaque étape",
-    tension="<b>Tension à arbitrer</b> : le code déterministe est prévisible mais peu flexible ; un système tout agentique "
-            "est flexible mais difficile à garantir. Choix : un squelette en code, et le LLM seulement là où il faut lire "
-            "du texte libre.",
+    reponses=["en partie : les règles sont chiffrées, l'avis de fraude est externe", "non",
+              "oui : éligibilité et pièces, estimation, anti-fraude, issue (§ 2)", "oui : éligibilité et pièces", "oui",
+              "appels, échecs, latence, appels externes (interface.md)"],
+    final="<b>Pattern retenu</b> : une Coordination centrale en code (pattern superviseur) qui applique les règles de décision, "
+          "et quatre agents de contrôle, chacun maître d'une seule section · éligibilité et pièces en parallèle · "
+          "un seul appel au partenaire par demande · une trace à chaque étape",
+    tension="<b>Tension à arbitrer</b> : le code est prévisible mais rigide ; un système tout agentique est souple mais "
+            "difficile à garantir. Ici chaque règle est chiffrée et les engagements sont absolus (issue garantie, 10 s) : "
+            "un squelette en code, l'avis externe venant du partenaire.",
     legende=[(VIOLET, "Question métier"), (VERT, "Question d'architecture"), (GRIS, "Option écartée"),
              (BLEU, "Option retenue ou ajoutée"), (ORANGE, "Tension à arbitrer")],
 )
