@@ -83,6 +83,9 @@ Questions associées :
 
 - [x] Quels sont exactement les agents ?
   **Réponse.** Cinq, un par section métier de `interface.md` : **Éligibilité** (`eligibilite`), **Pièces justificatives** (`pieces`), **Estimation** (`estimation`), **Anti-fraude**, liaison avec le partenaire (`avis_fraude`), et la **Coordination** (`issue`). « Une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section métier. »
+  Le brief cite quatre agents (éligibilité, pièces, estimation, coordination). `interface.md` en impose un cinquième : il y a cinq sections métier, un agent par section, et la Coordination écrit déjà `issue`. La section `avis_fraude` revient donc à un agent de liaison avec le partenaire. Cet agent n'émet aucun avis : il calcule les indicateurs, appelle le partenaire et contrôle sa réponse.
+- [x] Sous quel nom chaque agent apparaît-il dans la trace ?
+  **Réponse.** Un nom fixe par agent, utilisé dans le champ `agent` de la trace et comme clé des métriques de `traiter_lot` (`interface.md`) : `coordination`, `eligibilite`, `pieces`, `estimation`, `antifraude`. Changer un nom casserait la lecture des métriques.
 - [x] Pour chaque agent : que peut-il faire, et que ne doit-il surtout pas faire ?
   **Réponse :** voir la carte des agents en fin de section et le schéma 1. Les frontières viennent du § 2 : l'éligibilité ne chiffre pas, l'estimation ne se prononce pas sur la fraude, l'avis de fraude vient du partenaire, seule la décision conclut.
 - [x] Les outils sont-ils partagés entre agents, ou chacun a-t-il les siens ?
@@ -110,7 +113,7 @@ def verifier_eligibilite(demande: Demande) -> ResultatEligibilite:
 | Agent | Entrée | Sortie | Erreurs possibles | Docstring (une phrase) |
 |---|---|---|---|---|
 | Éligibilité | contrat et sinistre de la demande | éligible oui ou non ; conditions non remplies | données incomplètes | Dit si le contrat couvre le sinistre, sans chiffrer |
-| Pièces justificatives | pièces, type de sinistre, dépôts de l'espace assuré | complet, ou pièces manquantes ou illisibles ; factures lisibles ; compléments demandés | données incomplètes | Dit si les pièces exigées sont présentes et lisibles, et demande les compléments, sans conclure la demande |
+| Pièces justificatives | pièces, type de sinistre, dépôts de l'espace assuré | complet, ou pièces manquantes ou illisibles ; factures lisibles ; compléments demandés | données incomplètes | Dit si les pièces exigées sont présentes, lisibles et du type attendu, et demande les compléments quand la Coordination le lui confie, sans conclure la demande |
 | Estimation | montant déclaré, formule, factures lisibles | montant justifié, montant retenu, montant estimé | données incomplètes | Calcule le montant remboursable, franchise et plafond compris, sans juger la fraude |
 | Anti-fraude | champs utiles de la demande, montant justifié | non requis ; ou avis (niveau, score, indicateurs, `evaluation_id`) ; ou indisponible avec la raison | délai dépassé, erreur du service, réponse non conforme : toutes rendent « indisponible », jamais une exception | Calcule les indicateurs F1 à F4 et, si l'un est présent, obtient l'avis du partenaire en un seul appel, sans jamais émettre d'avis lui-même |
 | Coordination | toutes les sections | section `issue` ; fiche de décision | borne atteinte, agent en échec : toutes deux mènent à une escalade motivée | Délègue chaque contrôle, applique les règles de décision dans l'ordre et conclut, sans refaire aucun contrôle |
@@ -120,7 +123,7 @@ def verifier_eligibilite(demande: Demande) -> ResultatEligibilite:
 | Agent | Garde-fou | Métrique de bon fonctionnement |
 |---|---|---|
 | Éligibilité | le motif cite chaque condition non remplie ; aucun accès au montant | échecs ; refus par condition (NOM-02, NOM-03, NOM-04, NOM-10, NOM-11 en couvrent chacune une) |
-| Pièces justificatives | demandes de complément bornées (2 au plus) ; la demande de complément n'est faite que si la demande est éligible | part des demandes avec complément ; échecs |
+| Pièces justificatives | demandes de complément bornées (2 au plus) ; une demande de complément n'est faite que sur délégation de la Coordination, après le résultat de l'Éligibilité | part des demandes avec complément ; échecs |
 | Estimation | le montant n'est jamais négatif, jamais supérieur au plafond de la formule, arrondi au centime (NOM-05 le vérifie) | échecs ; latence |
 | Anti-fraude | filtre sortant en liste blanche ; un seul appel par dossier (marqueur écrit par la Coordination avant la délégation) ; abandon à 3 s ; réponse contrôlée avant usage (chantier 2) | appels externes, réponses écartées, part des demandes en mode dégradé |
 | Coordination | bornes vérifiées avant chaque délégation ; seule à écrire `issue` | étapes consommées par demande, bornes atteintes (`arret`), part d'escalades |
@@ -142,11 +145,13 @@ Autres frontières tranchées :
 | Escalader pour pièces manquantes | Pièces, Coordination | Pièces le constate ; la Coordination escalade (règle 2), car « seule la décision conclut la demande » (§ 2) |
 | Calculer le montant justifié | Pièces, Estimation | Estimation (§ 6), à partir des factures lisibles fournies par Pièces |
 | Un montant déclaré supérieur aux factures | Pièces (« cohérence avec la déclaration », § 5), Anti-fraude (F4, § 7) | Anti-fraude, par l'indicateur F4 ; ce n'est pas un motif de demande de complément. Le scénario AF-06 le confirme : 2 000 € déclarés, 1 500 € justifiés, demande acceptée avec un avis faible |
+| La « cohérence avec la déclaration » (§ 5) | Pièces, Anti-fraude | Pièces vérifie que les pièces sont du type exigé pour le type de sinistre déclaré (une photo pour un dégât des eaux, un dépôt de plainte pour un vol). Une pièce ne porte que `type`, `lisible` et `montant` (§ 3) ; l'écart de montant relève de F4 |
+| Décider d'une demande de complément | Pièces, Coordination | La Coordination, après le résultat de l'Éligibilité ; Pièces l'adresse à l'assuré. Pièces ne lit pas `eligibilite` |
 
 ### Dépendances et parallélisme
 
 - [x] Quelles étapes dépendent les unes des autres, et lesquelles peuvent s'exécuter en parallèle ?
-  **Réponse.** Éligibilité et vérification des pièces sont indépendantes et tournent en parallèle. L'Estimation attend les factures lisibles de Pièces. L'Anti-fraude attend l'Estimation (F4). La Coordination conclut en dernier. L'appel au partenaire n'est jamais lancé plus tôt : appeler pour une demande qui sera refusée gaspillerait l'unique appel autorisé et enverrait des données sans nécessité.
+  **Réponse.** Éligibilité et vérification des pièces sont indépendantes et tournent en parallèle. La demande de complément, elle, attend l'Éligibilité : la Coordination ne la confie à Pièces que si la demande est éligible. L'Estimation attend les factures lisibles de Pièces. L'Anti-fraude attend l'Estimation (F4). La Coordination conclut en dernier. L'appel au partenaire n'est jamais lancé plus tôt : appeler pour une demande qui sera refusée gaspillerait l'unique appel autorisé et enverrait des données sans nécessité.
 - [x] Quand deux résultats obtenus en parallèle se contredisent (par exemple : éligible, mais pièces incomplètes), quelle règle l'emporte ?
   **Réponse.** L'ordre des règles du § 10 : la première qui s'applique fixe l'issue. Une demande non éligible est refusée quel que soit l'état de ses pièces (règle 1), et la demande de complément n'est alors jamais adressée à l'assuré.
 
@@ -156,7 +161,7 @@ Autres frontières tranchées :
 |---|---|---|---|---|---|
 | Coordination | délègue, vérifie les bornes, applique les règles du § 10, conclut | toutes les sections | `issue`, fiche de décision | refaire un contrôle | code |
 | Éligibilité | conditions E1 à E5 de la spec | contrat, sinistre | éligible, conditions non remplies | chiffrer, appliquer le plafond, juger les pièces ou la fraude | code |
-| Pièces justificatives | présence, lisibilité, cohérence des pièces ; demandes de complément | pièces, dépôts de l'espace assuré | complet ou manquantes, factures lisibles | conclure ou escalader, chiffrer, juger la fraude | code |
+| Pièces justificatives | présence, lisibilité, type attendu des pièces ; demandes de complément confiées par la Coordination | pièces, dépôts de l'espace assuré | complet ou manquantes, factures lisibles | conclure ou escalader, chiffrer, juger la fraude, décider seul d'une demande de complément | code |
 | Estimation | montant justifié, retenu, estimé ; franchise et plafond | montant déclaré, formule, factures lisibles | montants | juger la fraude, revenir sur l'éligibilité | code |
 | Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | champs utiles de la demande, montant justifié | non requis, avis ou indisponible | émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel | code |
 
@@ -170,10 +175,15 @@ Autres frontières tranchées :
   **Réponse (§ 2, § 11).** Deux issues seulement : une **décision** (acceptée ou refusée) ou une **escalade** vers `gestionnaire` ou `cellule_fraude`, avec un motif lisible. Il n'existe pas d'état « en attente » sans qu'un humain en ait été saisi. Le schéma 2 montre que chaque chemin mène à l'une de ces issues.
 - [x] Comment borne-t-on les boucles ?
   **Réponse.** Une seule boucle existe dans le parcours : la demande de complément de pièces, qui reprend le contrôle après chaque dépôt de l'assuré (§ 5). Elle est bornée par le nombre de compléments, par la détection d'un état déjà vu et par les bornes globales (étapes et durée).
+- [x] Qu'est-ce qu'une étape ?
+  **Réponse.** Une délégation de la Coordination à un agent, soit une ligne de trace. Une demande de complément, avec la lecture du dépôt de l'assuré et le nouveau contrôle des pièces, compte pour une étape. L'écriture de l'issue par la Coordination est la dernière étape.
 - [x] Quelles bornes au départ, et sur quelle base les choisit-on ?
   **Réponse :** voir le tableau ci-dessous. La durée vient de l'engagement de service ; le nombre d'étapes vient du chemin le plus long prévu par la spec et les scénarios ; le délai du partenaire vient de son contrat.
 - [x] Que se passe-t-il quand une borne est atteinte ?
-  **Réponse.** Jamais un arrêt silencieux. La demande reçoit une issue, une escalade vers `gestionnaire`, et sa fiche le signale dans `arret` avec le nom de la borne (`interface.md`). La file de destination n'est pas fixée par la spec : **choix à confirmer** avec le client.
+  **Réponse.** Jamais un arrêt silencieux. La demande reçoit une issue, une escalade vers `gestionnaire`, et sa fiche le signale dans `arret` avec le nom de la borne (`interface.md`). La file de destination n'est pas fixée par la spec, et le scénario BCL-01 ne vérifie que l'escalade et l'arrêt signalé : **choix à confirmer** avec le client.
+  Pour que la trace ne dépasse jamais `etapes_max` (`interface.md`), la Coordination ne délègue plus aucun contrôle dès que la trace atteint `etapes_max` moins une étape : la dernière est réservée à l'écriture de l'issue. De même, elle arrête de déléguer avant la fin des 10 s, en gardant le temps de produire la fiche.
+- [x] Comment un lot de demandes est-il traité ?
+  **Réponse (§ 12).** « Le traitement d'une demande n'est jamais retardé par celui d'une autre. » `traiter_lot` traite donc les demandes du lot **en concurrence**, chacune avec son propre état et sa propre durée de 10 s ; les fiches sont rendues dans l'ordre des demandes (`interface.md`). Traitées l'une après l'autre, trois demandes qui attendent chacune le partenaire jusqu'à 3 s (scénario PAN-02) retarderaient la troisième d'environ 6 s. Le plan d'épreuve mesure ce point sur PAN-01 et PAN-02.
 - [x] Qu'est-ce qu'une escalade « motivée » ?
   **Réponse (§ 8).** Elle précise la file destinataire et un motif lisible par le gestionnaire qui reprend le dossier : la règle ou la borne en cause, et l'étape atteinte. La trace complète accompagne la fiche.
 - [x] Que se passe-t-il quand un agent interne plante, renvoie un format invalide ou dépasse son délai ?
@@ -188,7 +198,7 @@ Les valeurs fixées par la spec ou le contrat ne sont pas provisoires. Les autre
 | Borne | Valeur de départ | Justification | Scénario d'épreuve qui la teste |
 |---|---|---|---|
 | Durée par demande (`duree_max_s`) | 10 s | engagement de service (§ 12), maximum autorisé par `interface.md`. Si la mesure montre qu'une demande arrêtée à 10 s dépasse l'engagement le temps de produire sa fiche, la borne descendra à 8 s | PAN-02 (partenaire lent) |
-| Étapes par demande (`etapes_max`) | 8 | chemin nominal : 5 étapes (éligibilité, pièces, estimation, anti-fraude, issue) ; plus 2 demandes de complément ; plus 1 de marge | BCL-01 (piège à boucle) |
+| Étapes par demande (`etapes_max`) | 8 | chemin nominal : 5 étapes (éligibilité, pièces, estimation, anti-fraude, issue) ; plus 2 demandes de complément, soit 7 pour le chemin le plus long ; plus 1 de marge. La dernière étape est toujours réservée à l'issue | BCL-01 (piège à boucle) |
 | Demandes de complément par demande | 2 | NOM-07 et PAN-01 en demandent une ; aucun scénario n'en justifie davantage | BCL-01 |
 | Même état vu deux fois | arrêt immédiat | une pièce toujours illisible après un nouveau dépôt ne fait pas avancer la demande | BCL-01 |
 | Appels au partenaire par dossier | 1 exactement | contrat, § 6 : un seul appel, aucune relance, tout doublon est refusé et signalé | PAN-01, PAN-02, scénarios `invalide` |
@@ -196,7 +206,9 @@ Les valeurs fixées par la spec ou le contrat ne sont pas provisoires. Les autre
 | Délai par contrôle interne | 1 s | contrôles en code, sans réseau ; une seconde laisse du temps à l'appel externe | cas nominal |
 | Budget de tokens ou de coût | sans objet | aucun LLM dans le chemin de décision | (aucun) |
 
-Lecture du scénario BCL-01 : la facture est illisible, et le seul dépôt de l'assuré est une facture tout aussi illisible. Ce n'est pas « aucun dépôt du type demandé » (§ 5), donc la spec demanderait un nouveau complément, sans fin. Le scénario attend une escalade avec `arret` : c'est la borne « même état vu deux fois » qui l'arrête. Cette lecture sera vérifiée contre les tests d'acceptance quand ils seront fournis.
+Lecture du scénario BCL-01 : la facture est illisible, et le seul dépôt de l'assuré est une facture tout aussi illisible. Ce n'est pas « aucun dépôt du type demandé » (§ 5), donc la spec demanderait un nouveau complément, sans fin. Le scénario attend une escalade avec `arret` : c'est la borne « même état vu deux fois » qui l'arrête, à la quatrième étape (éligibilité, pièces, demande de complément qui retrouve le même état, issue). Cette lecture sera vérifiée contre les tests d'acceptance quand ils seront fournis.
+
+Les dépôts de l'espace assuré se lisent dans l'ordre : le premier dépôt répond à la première demande de complément, le deuxième à la deuxième (§ 3).
 
 ## 5. La mémoire partagée
 
@@ -207,9 +219,9 @@ Le brief demande une mémoire partagée de la demande, avec un état commun et u
 - [x] Sous quelle forme, et où vit-elle ?
   **Réponse.** En mémoire, un objet par demande, créé au début de `traiter_demande` et jamais partagé entre deux demandes : le traitement d'une demande n'en retarde pas une autre (§ 12). À la fin, la fiche de décision est construite depuis `issue`, `avis_fraude`, la trace et `arret`.
 - [x] Accès maîtrisé : qui lit et qui écrit quels champs ?
-  **Réponse :** voir le tableau ci-dessous. Chaque agent écrit sa seule section, une seule fois ; il lit seulement ce dont il a besoin.
+  **Réponse :** voir le tableau ci-dessous. Chaque agent écrit sa seule section ; il lit seulement ce dont il a besoin.
 - [x] Comment un agent évite-t-il d'écraser le travail d'un autre ?
-  **Réponse.** Une table fixe donne le propriétaire de chaque section ; toute écriture d'un agent dans une autre section est refusée par une erreur de droits. Chaque section métier ne s'écrit qu'une fois. Éligibilité et Pièces, qui tournent en parallèle, écrivent dans des sections différentes : aucun conflit possible. La trace enregistre l'agent et les sections écrites à chaque étape, ce qui rend la règle vérifiable par un test.
+  **Réponse.** Une table fixe donne le propriétaire de chaque section ; toute écriture d'un agent dans une autre section est refusée par une erreur de droits. Seul le propriétaire écrit sa section, et il peut la réécrire à une étape suivante : `pieces` est mise à jour par Pièces après chaque dépôt de l'assuré ; les autres sections métier ne sont écrites qu'une fois. Éligibilité et Pièces, qui tournent en parallèle, écrivent dans des sections différentes : aucun conflit possible. La trace enregistre l'agent et les sections écrites à chaque étape, ce qui rend la règle vérifiable par un test.
 - [x] Peut-on reprendre une demande après un crash, sans la bloquer de nouveau ?
   **Réponse.** Une demande se traite en 10 s au plus : en cas de crash, elle est reprise depuis le début, les contrôles en code donnant le même résultat. **Une exception, imposée par le contrat du partenaire** : un seul appel par dossier, et un doublon est signalé comme manquement. La Coordination écrit donc le marqueur « appel au partenaire délégué » dans `controle` juste avant de déléguer l'appel ; à la reprise, un marqueur sans avis rend l'avis « indisponible » (mode dégradé), et le partenaire n'est jamais rappelé.
 - [x] Quels champs de la mémoire ne doivent jamais partir chez le partenaire ? [E3]
@@ -259,7 +271,7 @@ Le filtre des données sortantes, la validation des réponses du partenaire et l
 | Refus automatiques (règles 1 et 3) | article 22 du RGPD | le service juridique du client |
 | Lecture du scénario BCL-01 | dépôt illisible : la spec ne dit pas s'il compte comme un dépôt | les tests d'acceptance, absents de l'archive |
 | Durée de 10 s ou 8 s | dépend du temps mesuré pour produire la fiche | le plan d'épreuve du chantier 2 |
-| Traitement d'un lot en parallèle | « une demande n'en retarde pas une autre » (§ 12) : à mesurer sur PAN-01 et PAN-02 | le plan d'épreuve du chantier 2 |
+| Attente réelle de l'assuré après une demande de complément | les 10 s portent sur le traitement automatisé (§ 12) ; dans les scénarios, les dépôts sont déjà dans `espace_assure`. En production, l'attente d'un dépôt qui peut prendre des jours n'est pas décrite | le client |
 
 ## Schémas
 

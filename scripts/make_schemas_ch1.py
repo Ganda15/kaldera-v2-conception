@@ -30,10 +30,10 @@ s.box("elig", "<b>Éligibilité</b> (règles en code) · <b>écrit : eligibilite
               + ROUGE_TXT + "chiffrer la demande, appliquer le plafond, juger les pièces ou la fraude." + FIN,
       50, 255, 400, 175, S_AGENT)
 s.box("pieces", "<b>Pièces justificatives</b> (code) · <b>écrit : pieces</b><br><br>"
-                "Vérifie présence, lisibilité et cohérence des pièces exigées. Demande un complément via l'espace assuré "
-                "(seulement si la demande est éligible).<br>"
+                "Vérifie présence, lisibilité et type attendu des pièces exigées. Adresse le complément via l'espace "
+                "assuré quand la Coordination le lui confie (demande éligible).<br>"
                 "Renvoie : complet, ou manquantes ; les factures lisibles.<br><br>"
-                + ROUGE_TXT + "conclure ou escalader la demande, chiffrer, juger la fraude." + FIN,
+                + ROUGE_TXT + "conclure ou escalader la demande, chiffrer, juger la fraude, décider seul d'un complément." + FIN,
       50, 445, 400, 185, S_AGENT)
 s.box("estim", "<b>Estimation</b> (règles en code) · <b>écrit : estimation</b><br><br>"
                "Montant justifié (factures lisibles), montant retenu (le plus petit des deux), "
@@ -115,21 +115,25 @@ s.box("t6", "<b>DÉCISION : ACCEPTÉE</b> · règle 6<br>montant remboursé = mo
 
 s.box("bornes", "<b>Bornes provisoires</b><br>vérifiées par la Coordination avant chaque délégation<br><br>"
                 "• Durée par demande : <b>10 s</b> (engagement de service, spec § 12)<br>"
-                "• Étapes par demande : <b>8</b> au plus<br>&nbsp;&nbsp;&nbsp;(chemin nominal : 5 ; plus 2 compléments ; plus 1 de marge)<br>"
+                "• Étapes par demande : <b>8</b> au plus (une étape = une délégation = une ligne de trace)<br>"
+                "&nbsp;&nbsp;&nbsp;(chemin nominal : 5 ; plus 2 compléments ; plus 1 de marge)<br>"
+                "&nbsp;&nbsp;&nbsp;la dernière étape est réservée à l'issue : la trace ne dépasse jamais 8<br>"
                 "• Demandes de complément : <b>2</b> au plus<br>"
                 "• Même état vu deux fois : arrêt immédiat<br>"
-                "• Délai par contrôle interne : 1 s · appel au partenaire : 3 s (contrat § 5)<br><br>"
+                "• Délai par contrôle interne : 1 s · appel au partenaire : 3 s (contrat § 5)<br>"
+                "• Lot : demandes traitées en concurrence, 10 s chacune (§ 12)<br><br>"
                 "<b>Borne atteinte</b> : ESCALADE gestionnaire, et la fiche le signale dans <i>arret</i> (nom de la borne).<br><br>"
                 "<i>Fondées sur le chemin le plus long prévu par la spec et les scénarios ; "
                 "le chantier 2 les éprouve (BCL-01, PAN-02), chaque changement entre au journal des ajustements.</i>",
-      1240, 95, 400, 330, S_AMBIG + "fillColor=#fff2cc;strokeColor=#bf9000;arcSize=4;")
+      1240, 95, 400, 390, S_AMBIG + "fillColor=#fff2cc;strokeColor=#bf9000;arcSize=4;")
 s.box("qui", "<b>Qui décide que la demande est terminée ?</b><br>"
              "La Coordination seule, en écrivant la section issue (« seule la décision conclut la demande », § 2). "
              "Aucun autre état final : jamais « en attente » sans qu'un humain en soit saisi.",
-      1240, 450, 400, 110, S_NOTE)
+      1240, 505, 400, 110, S_NOTE)
 s.box("comp", "<b>Pourquoi le complément après l'éligibilité ?</b><br>"
               "Une demande non éligible est refusée quel que soit l'état de ses pièces (règle 1) : "
-              "inutile de solliciter l'assuré.", 1240, 585, 400, 90, S_NOTE)
+              "inutile de solliciter l'assuré. La Coordination décide le complément ; Pièces l'adresse.",
+      1240, 640, 400, 100, S_NOTE)
 
 s.edge("a1", "s0", "e", E_DELEG, "délègue", [(270, 165), (165, 165)], sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("a2", "s0", "p", E_DELEG, "délègue", [(270, 165), (415, 165)], sortie=(0.5, 1), entree=(0.5, 0))
@@ -170,8 +174,8 @@ s.ecrire("schema-2-orchestration", "Orchestration et terminaison", 1670, 1290)
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Mémoire partagée de la demande · Chantier 1", 30, 20, 1100, 30, S_TITRE)
-s.box("st", "Un état par demande. Chaque agent écrit sa seule section métier, une seule fois ; la trace enregistre "
-            "qui a écrit quoi (interface.md).", 30, 54, 1200, 22, S_SOUS)
+s.box("st", "Un état par demande. Seul son propriétaire écrit une section métier ; la trace enregistre "
+            "qui a écrit quoi à chaque étape (interface.md).", 30, 54, 1200, 22, S_SOUS)
 
 s.box("agents", "Agents : chacun écrit sa section, lit seulement ce dont il a besoin", 30, 100, 400, 640, S_GROUPE)
 AG = S_AGENT + "fontSize=11;"
@@ -196,7 +200,7 @@ sections = [
      SEC_AGENT, 426),
     ("issue", "<b>issue</b> · écrite par la Coordination, conclut la demande<br>décision ou escalade, montant, motif, file, mode dégradé",
      SEC_ORCH, 506),
-    ("controle", "<b>controle</b> (hors métier) : compteurs des bornes, arret", SEC_ORCH, 584),
+    ("controle", "<b>controle</b> (hors métier) : compteurs des bornes, marqueur d'appel au partenaire, arret", SEC_ORCH, 584),
     ("trace", "<b>trace</b> (hors métier), ajout seul : une étape par ligne<br>agent, sections écrites, action, durée, statut",
      SEC_ORCH, 648),
 ]
@@ -208,7 +212,7 @@ for agent, section in [("ae", "eligibilite"), ("ap", "pieces"), ("aes", "estimat
 
 s.box("garde", "<b>Comment un agent n'écrase pas le travail d'un autre</b><br>"
                "• Une table fixe propriétaire de chaque section ; écrire dans une autre section est refusé (erreur de droits).<br>"
-               "• Chaque section métier est écrite une seule fois.<br>"
+               "• pieces est réécrite par Pièces après chaque dépôt de l'assuré ; les autres sections métier ne sont écrites qu'une fois.<br>"
                "• Éligibilité et Pièces tournent en parallèle sans conflit : sections différentes.<br>"
                "• La trace note l'agent et les sections écrites à chaque étape : la règle se vérifie par un test.",
       1130, 100, 400, 190, S_AMBIG)
