@@ -1,6 +1,6 @@
 # Chantier 1 : l'équipe et son orchestration
 
-Ce que le brief attend pour ce chantier : la carte des agents (rôles, frontières dont le point ambigu tranché, dépendances, parallélisme), le schéma d'orchestration (délégations, conditions d'arrêt, bornes provisoires) et le modèle de la mémoire partagée.
+Ce que le brief attend pour ce chantier : l'architecture générale de l'équipe, la carte des agents (rôles, frontières dont le point ambigu tranché, dépendances, parallélisme), le schéma d'orchestration (délégations, conditions d'arrêt, bornes provisoires) et le modèle de la mémoire partagée.
 
 Exigences concernées : E1, E2 et E6, plus E3 pour les champs sensibles de la mémoire. Le détail des exigences est dans le [README](README.md).
 
@@ -154,6 +154,29 @@ Autres frontières tranchées :
   **Réponse.** Éligibilité et vérification des pièces sont indépendantes et tournent en parallèle. La demande de complément, elle, attend l'Éligibilité : la Coordination ne la confie à Pièces que si la demande est éligible. L'Estimation attend les factures lisibles de Pièces. L'Anti-fraude attend l'Estimation (F4). La Coordination conclut en dernier. L'appel au partenaire n'est jamais lancé plus tôt : appeler pour une demande qui sera refusée gaspillerait l'unique appel autorisé et enverrait des données sans nécessité.
 - [x] Quand deux résultats obtenus en parallèle se contredisent (par exemple : éligible, mais pièces incomplètes), quelle règle l'emporte ?
   **Réponse.** L'ordre des règles du § 10 : la première qui s'applique fixe l'issue. Une demande non éligible est refusée quel que soit l'état de ses pièces (règle 1), et la demande de complément n'est alors jamais adressée à l'assuré.
+
+### Règle métier ou jugement : ce que fait chaque agent
+
+Dans ce dossier, un agent est une unité de responsabilité : un rôle, un contrat (entrée, sortie, erreurs) et une seule section de la mémoire. Sa réalisation interne peut être du code ou un LLM ; la Coordination ne voit que le contrat.
+
+| Agent | Contrôles | Nature | Où un LLM aurait du sens, en production | Place dans l'architecture et la mémoire |
+|---|---|---|---|---|
+| Éligibilité | E1 contrat actif, E2 cotisations à jour, E3 carence de 30 jours, E4 déclaration sous 30 jours (5 pour un vol), E5 garantie de la formule | règles simples : un statut, une date, une liste | aucun | écrit `eligibilite`, lue par la Coordination (règle 1) ; tourne en parallèle de Pièces |
+| Pièces justificatives | présence, lisibilité, type attendu ; demande de complément | présence et type : règles. Lisibilité : fournie par un champ dans les scénarios (`lisible`, § 3) | lire une facture scannée, vérifier qu'une photo montre bien le sinistre déclaré : le cas le plus solide pour un LLM | écrit `pieces`, seule section réécrite après chaque dépôt ; fournit les factures lisibles à l'Estimation |
+| Estimation | montant justifié, retenu, estimé ; franchise ; plafond | calcul | aucun : un montant calculé par un LLM serait un risque | écrit `estimation` ; fournit le montant justifié à l'Anti-fraude (F4) |
+| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | F1 à F4 : des seuils. L'avis : un jugement, rendu par le partenaire | le jugement existe déjà, chez le partenaire | écrit `avis_fraude` ; seul agent qui sort du système ; ne voit ni l'identité ni l'IBAN |
+| Coordination | bornes, règles du § 10 dans l'ordre, issue, motif | règles ordonnées | rédiger le motif lisible (§ 11), hors décision | écrit `issue` et `controle` ; seule à conclure |
+
+**Pourquoi garder des agents alors que les contrôles sont des règles ?**
+
+1. Chaque agent rend un service sans montrer ses règles. La Coordination demande « cette demande est-elle éligible ? » et reçoit oui ou non avec les conditions non remplies, sans connaître les seuils. Si le métier passe la carence de 30 à 45 jours, seul l'agent Éligibilité change. Le partenaire anti-fraude fonctionne déjà ainsi : il rend un avis sans révéler son modèle.
+2. La frontière se prouve : une section, un propriétaire, vérifié dans la trace sur les 28 scénarios [E2].
+3. Le contrat ne change pas si la réalisation change. L'agent Pièces peut passer au LLM sans toucher la Coordination ni la mémoire. Trois choses changent alors : un budget de tokens (aujourd'hui « sans objet », section 4), une validation de sa sortie, et la règle « pas de relance », qui suppose un code déterministe.
+4. Les métriques se lisent par agent (appels, échecs, latence), sous un nom fixe (`interface.md`).
+
+**Comment les agents communiquent.** Ici, les agents internes sont des fonctions appelées par la Coordination, dans le même processus : une seule équipe les maintient, et c'est le plus sûr pour tenir 10 s. Si un contrôle appartenait à un autre service de l'entreprise, il serait exposé par une API ou une interface d'agent, comme le partenaire en A2A. Ce choix dépend de l'organisation, pas des règles de décision.
+
+Le schéma A montre cette architecture générale sur une seule vue.
 
 ### La carte des agents
 
@@ -336,6 +359,12 @@ Les cas d'usage de la liaison avec le partenaire (avis faible, avis modéré, r�
 ## Schémas
 
 Fondés sur `specs_metier.md` (version 3.2) et `interface.md`. Restent provisoires : les valeurs des bornes, à éprouver au chantier 2, et la file de l'escalade sur borne atteinte. Chaque schéma existe en `.drawio`, modifiable sur [app.diagrams.net](https://app.diagrams.net/), et en `.png`. Ils se régénèrent avec `scripts/make_schemas_ch1.py`.
+
+### A. L'architecture générale
+
+Une seule vue : l'entrée `traiter_lot`, la Coordination, les quatre agents de contrôle et la section que chacun écrit, la mémoire partagée de la demande, l'espace assuré, le partenaire, les métriques et les deux issues possibles. Les deux encadrés de gauche résument pourquoi les contrôles restent des agents et comment ils communiquent (section 3). Fichiers : [schema-A-architecture-generale.drawio](schemas/schema-A-architecture-generale.drawio), [PNG](schemas/schema-A-architecture-generale.png).
+
+![Architecture générale](schemas/schema-A-architecture-generale.png)
 
 ### 0. Le choix du pattern : l'arbre de décision
 

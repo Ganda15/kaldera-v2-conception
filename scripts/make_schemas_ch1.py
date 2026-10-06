@@ -273,3 +273,89 @@ arbre_de_decision(
     legende=[(VIOLET, "Question métier"), (VERT, "Question d'architecture"), (GRIS, "Option écartée"),
              (BLEU, "Option retenue ou ajoutée"), (ORANGE, "Tension à arbitrer")],
 )
+
+# =============================================================================================================
+# Schéma A : l'architecture générale (l'équipe, la mémoire, l'extérieur et les issues sur une seule vue)
+# =============================================================================================================
+s = Schema()
+s.box("t", "Kaldera V2 · Architecture générale · Chantier 1", 30, 20, 1000, 30, S_TITRE)
+s.box("st", "Une seule vue : l'entrée, la Coordination, les quatre agents de contrôle, la mémoire partagée de la demande, "
+            "les échanges avec l'extérieur et les deux issues possibles. Fondé sur specs_metier.md (v3.2) et interface.md.",
+      30, 54, 1500, 22, S_SOUS)
+
+s.box("lot", "<b>Entrée : traiter_lot</b><br>Chaque demande reçoit son propre état et ses 10 s ; "
+             "les demandes d'un lot sont traitées en concurrence (§ 12).",
+      30, 100, 250, 100, S_NOTE)
+s.box("coord", "<b>Coordination</b> (code, sans LLM) · <b>écrit : issue, controle</b><br>"
+               "Délègue chaque contrôle, vérifie les bornes avant chaque délégation (8 étapes, 10 s, 2 compléments), "
+               "applique les règles de décision du § 10 dans l'ordre et conclut. Les agents ne s'appellent jamais entre eux.",
+      400, 100, 1010, 80, S_ORCH)
+
+s.box("grp", "", 320, 210, 1100, 200, S_GROUPE)
+s.box("contrat", "<b>Agents de contrôle</b> (cadre bleu) : un contrat fixe, entrée, sortie, erreurs. Réalisés en code aujourd'hui ; "
+                 "un agent peut passer au LLM sans toucher à la Coordination ni à la mémoire.",
+      1460, 395, 170, 165, S_NOTE)
+agents = [
+    ("ap", "<b>Pièces justificatives</b> · <b>écrit : pieces</b><br>Présence, lisibilité, type attendu ; "
+           "adresse le complément confié par la Coordination.<br><i>Règles simples. En production, lire une facture "
+           "scannée : le cas le plus solide pour un LLM.</i>", 335),
+    ("ae", "<b>Éligibilité</b> · <b>écrit : eligibilite</b><br>E1 contrat actif, E2 cotisations, E3 carence 30 j, "
+           "E4 délai de déclaration, E5 garantie.<br><i>Règles simples : un statut, une date, une liste.</i>", 605),
+    ("aes", "<b>Estimation</b> · <b>écrit : estimation</b><br>Montant justifié, retenu, estimé ; franchise ; "
+            "plafond de la formule.<br><i>Calcul : jamais confié à un LLM.</i>", 875),
+    ("af", "<b>Anti-fraude</b> · <b>écrit : avis_fraude</b><br>Indicateurs F1 à F4 ; un seul appel au partenaire ; "
+           "contrôle de sa réponse.<br><i>Seuils en code ; le jugement vient du partenaire.</i>", 1145),
+]
+for aid, texte, x in agents:
+    s.box(aid, texte, x, 250, 260, 130, S_AGENT)
+    s.edge(f"d{aid}", "coord", aid, E_DELEG, "délègue", sortie=((x + 130 - 400) / 1010, 1), entree=(0.5, 0))
+
+s.box("mem", "Mémoire partagée de la demande : un objet par demande, en mémoire ; chaque section a un seul propriétaire",
+      320, 450, 1100, 250, S_CONTENEUR + "verticalAlign=bottom;spacingBottom=6;align=right;spacingRight=12;")
+for sid, texte, x in [("spieces", "<b>pieces</b><br>réécrite après chaque dépôt", 335),
+                      ("selig", "<b>eligibilite</b>", 605),
+                      ("sestim", "<b>estimation</b>", 875),
+                      ("sfraude", "<b>avis_fraude</b><br>niveau, score, evaluation_id", 1145)]:
+    s.box(sid, texte, x, 490, 260, 60, S_AGENT + CENTRE)
+for aid, sid in [("ap", "spieces"), ("ae", "selig"), ("aes", "sestim"), ("af", "sfraude")]:
+    s.edge(f"w{aid}", aid, sid, E_DEP, "écrit", sortie=(0.5, 1), entree=(0.5, 0))
+s.box("sissue", "<b>issue</b><br>décision ou escalade, motif", 335, 590, 260, 70, S_ORCH + CENTRE)
+s.box("sctrl", "<b>controle</b><br>compteurs des bornes, marqueur d'appel, arret", 605, 590, 260, 70, S_ORCH + CENTRE)
+s.box("sdem", "<b>demande</b><br>données reçues, lecture seule", 875, 590, 260, 70, S_EXT)
+s.box("strace", "<b>trace</b>, ajout seul<br>agent, sections écrites, durée, statut", 1145, 590, 260, 70, S_ORCH + CENTRE)
+s.edge("wcoord", "coord", "sissue", E_DEP, "écrit", [(305, 164), (305, 625)], sortie=(0, 0.8), entree=(0, 0.5))
+
+s.edge("e0", "lot", "coord", E_DEP, "une demande", sortie=(1, 0.4), entree=(0, 0.4))
+s.box("espace", "<b>Espace assuré</b><br>reçoit la demande de complément ; renvoie les dépôts de l'assuré (§ 5)",
+      30, 250, 240, 95, S_EXT)
+s.edge("x0", "ap", "espace", E_EXT, "complément", sortie=(0, 0.35), entree=(1, 0.5))
+s.box("part", "<b>Partenaire anti-fraude</b><br>agent externe, A2A<br>7 champs filtrés, 1 appel, abandon à 3 s<br>(chantier 2)",
+      1460, 250, 170, 120, S_EXT)
+s.edge("x1", "af", "part", E_EXT, "", sortie=(1, 0.35), entree=(0, 0.45))
+s.box("metr", "<b>Métriques par agent</b><br>appels, échecs, latence, appels externes (interface.md)",
+      1460, 590, 170, 90, S_EXT)
+s.edge("x2", "strace", "metr", E_EXT, "", sortie=(1, 0.5), entree=(0, 0.4))
+
+s.box("fiche", "<b>Fiche de décision</b> (§ 11)<br>construite depuis issue, avis_fraude, trace et arret", 335, 740, 260, 80, S_NOTE)
+s.edge("o1", "sissue", "fiche", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
+s.box("ok", "<b>Décision</b><br>acceptée (montant) ou refusée, avec un motif", 660, 745, 300, 70, S_FIN_OK)
+s.box("esc", "<b>Escalade motivée</b> vers une file humaine<br>gestionnaire ou cellule_fraude", 1000, 745, 405, 70, S_FIN_ESC)
+s.edge("o2", "fiche", "ok", E_OK, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("o3", "fiche", "esc", E_ESC, "", [(630, 835), (1200, 835)], sortie=(1, 0.85), entree=(0.5, 1))
+
+s.box("pourquoi", "<b>Pourquoi des agents, si les contrôles sont des règles ?</b><br>"
+                  "• Chaque agent rend un service sans montrer ses règles : si la carence passe de 30 à 45 jours, "
+                  "seul l'agent Éligibilité change.<br>"
+                  "• Une section, un propriétaire : la frontière se prouve dans la trace [E2].<br>"
+                  "• Le contrat reste le même si la réalisation passe du code au LLM.",
+      30, 375, 260, 215, S_AMBIG)
+s.box("comm", "<b>Comment ils communiquent</b><br>Agents internes : fonctions appelées par la Coordination, "
+              "dans le même processus. Partenaire : A2A, par le réseau. Un contrôle tenu par un autre service passerait "
+              "par une API ou une interface d'agent.",
+      30, 620, 260, 150, S_NOTE)
+
+s.legende([(VERT, "Coordination et ses sections"), (BLEU, "Agent de contrôle et sa section"),
+           (ORANGE, "Choix d'architecture"), (GRIS, "Externe ou chantier 2"), (ESC, "Escalade")], 30, 875)
+s.box("lg2", "Pointillé vert : délégation · trait plein : écriture dans la mémoire · pointillé gris : échange avec l'extérieur",
+      30, 911, 900, 20, S_SOUS)
+s.ecrire("schema-A-architecture-generale", "Architecture générale", 1660, 945)
