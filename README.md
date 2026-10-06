@@ -50,10 +50,11 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 
 ## État
 
-- [ ] `specs_metier.md`, `eval/scenarios.jsonl` et tests d'acceptance reçus
-- [ ] Réponses du chantier 1
+- [x] Documents du formateur reçus le 06/10/2026 : `docs/specs_metier.md`, `docs/interface.md`, `eval/scenarios.jsonl`, `external_agent/contrat.md`
+- [ ] Tests d'acceptance (`tests/acceptance/`) et pilote du partenaire simulé (`scripts/partner_ctl.py`) : cités par `interface.md`, pas encore reçus
+- [x] Réponses du chantier 1, fondées sur les documents reçus ; points ouverts listés en fin de chantier
 - [ ] Réponses du chantier 2
-- [x] Schémas du chantier 1 : arbre de décision, carte des agents, orchestration, mémoire partagée (proposition provisoire)
+- [x] Schémas du chantier 1 : arbre de décision, carte des agents, orchestration, mémoire partagée (fondés sur les documents reçus ; bornes provisoires)
 - [x] Schémas du chantier 2 : arbre de décision de la liaison, échange A2A et mode dégradé, plan d'épreuve (proposition provisoire)
 - [ ] Dossier validé par le formateur, avant tout code
 

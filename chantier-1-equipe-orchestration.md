@@ -4,223 +4,266 @@ Ce que le brief attend pour ce chantier : la carte des agents (rôles, frontièr
 
 Exigences concernées : E1, E2 et E6, plus E3 pour les champs sensibles de la mémoire. Le détail des exigences est dans le [README](README.md).
 
+Sources : [`docs/specs_metier.md`](docs/specs_metier.md) (version 3.2), [`docs/interface.md`](docs/interface.md), [`eval/scenarios.jsonl`](eval/scenarios.jsonl) (28 scénarios) et [`external_agent/contrat.md`](external_agent/contrat.md) (version 2.0), reçus le 06/10/2026. Les renvois « § » désignent les sections de `specs_metier.md`.
+
+> **Attention aux noms.** La spec nomme **E1 à E5** les cinq conditions d'éligibilité (§ 4). Dans ce dossier, **[E1] à [E6]** entre crochets désignent les exigences de la direction des opérations (README). Ce ne sont pas les mêmes.
+
 Démarche : le cadrage métier (section 1) précède le choix du pattern (section 2) et la conception de l'équipe (sections 3 à 6). Une architecture définie avant le cadrage risque d'optimiser ce qui n'en a pas besoin.
 
 ## 1. Cadrage métier
 
-Avant toute conception technique, un cadrage avec le métier établit les contraintes réelles du système. Il s'organise en trois volets : l'analyse de l'existant, l'expression du besoin et les résultats attendus. Questionner les choix déjà faits par le client permet d'identifier les contraintes effectives et d'éviter des optimisations sans valeur. Chaque question précise son impact sur la conception.
+Avant toute conception technique, un cadrage avec le métier établit les contraintes réelles du système, en trois volets : l'analyse de l'existant, l'expression du besoin et les résultats attendus. Les documents reçus répondent à une partie des questions ; les autres restent à poser au client.
 
 ### Analyse de l'existant
 
 - [ ] Le système actuel a-t-il déjà donné satisfaction ? Si oui, depuis quand ses performances se dégradent-elles, et quels indicateurs ou quelles traces l'attestent ?
-  *Impact sur la conception : la situation de référence à laquelle comparer la nouvelle équipe.*
+  **Ouvert.** Les documents ne donnent ni historique ni indicateur de l'agent actuel. *Impact : la situation de référence à laquelle comparer la nouvelle équipe.*
 - [ ] De quels indicateurs et de quelles traces dispose-t-on aujourd'hui (journaux, tableaux de bord, suivi LLMOps ou MLOps) ?
-  *Impact sur la conception : les sources réutilisables pour l'observabilité.*
+  **Ouvert** pour l'existant. Pour la cible, `interface.md` impose une trace par étape et quatre métriques par agent (section 6). *Impact : les sources réutilisables pour l'observabilité.*
 - [ ] Pour quelles raisons l'agent généraliste actuel a-t-il été conçu ainsi ?
-  *Impact sur la conception : les contraintes implicites à conserver ou à lever.*
+  **Ouvert.** *Impact : les contraintes implicites à conserver ou à lever.*
 - [ ] Quel est le volume de demandes (moyenne journalière, pics) ? Combien sont bloquées aujourd'hui, et à quelle étape ?
-  *Impact sur la conception : le parallélisme, les bornes, les priorités de traitement.*
-- [ ] Quel est le parcours réel d'une demande, de sa réception au remboursement, et où se situent les temps d'attente ?
-  *Impact sur la conception : les étapes effectives et le positionnement des escalades.*
+  **Ouvert.** Les scénarios traitent des lots de 3 et 5 demandes, et le traitement d'une demande ne doit jamais être retardé par celui d'une autre (§ 12). *Impact : le parallélisme entre demandes et les bornes.*
+- [x] Quel est le parcours réel d'une demande, de sa réception au remboursement ?
+  **Réponse (§ 2).** Éligibilité, pièces justificatives, estimation, contrôle anti-fraude (seulement si un indicateur de risque est présent), puis une issue : décision acceptée ou refusée, ou escalade vers une file humaine. Le seul temps d'attente prévu est la demande de complément de pièces à l'assuré (§ 5).
 
 ### Expression du besoin
 
-- [ ] Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou d'un système déterministe plus simple ? Pour quelles étapes ?
-  *Impact sur la conception : le périmètre réel du LLM (question Q0 de l'arbre de décision, section 2).*
-- [ ] Le partenaire anti-fraude externe est-il indispensable, ou un contrôle interne pourrait-il le remplacer ?
-  *Impact sur la conception : la place de l'échange A2A et du mode dégradé (chantier 2).*
-- [ ] Les règles métier (éligibilité, plafonds, pièces exigées) sont-elles formalisées ? Qui les fait évoluer, et à quelle fréquence ?
-  *Impact sur la conception : règles codées, ou externalisées dans une configuration.*
-- [ ] Un refus peut-il être prononcé de façon entièrement automatisée, ou doit-il être validé par un gestionnaire de sinistres ?
-  *Impact sur la conception : les états finaux. L'article 22 du RGPD encadre les décisions fondées exclusivement sur un traitement automatisé ; point à valider avec le service juridique du client.*
+- [x] Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou d'un système déterministe plus simple ? Pour quelles étapes ?
+  **Réponse.** Toutes les règles sont chiffrées (§ 4 à § 10) : elles s'écrivent en code et se testent. L'avis anti-fraude vient d'un agent externe, le partenaire. Aucune règle n'exige de LLM, et la description libre du sinistre n'entre dans aucune règle. **Choix : aucun LLM dans le chemin de décision.** Un LLM pourrait au plus rédiger le motif lisible de la fiche (§ 11), hors décision ; des modèles de phrases suffisent par défaut.
+- [x] Le partenaire anti-fraude externe est-il indispensable, ou un contrôle interne pourrait-il le remplacer ?
+  **Réponse (§ 2).** « L'avis de fraude est émis par le partenaire, jamais en interne. » Le partenaire est imposé ; son indisponibilité est traitée par le mode dégradé (§ 9, chantier 2).
+- [x] Les règles métier (éligibilité, plafonds, pièces exigées) sont-elles formalisées ? Qui les fait évoluer, et à quelle fréquence ?
+  **Réponse en partie.** Elles sont formalisées dans la spec, version 3.2. Qui les fait évoluer reste **ouvert**. **Choix :** les seuils (30 jours, 5 000 €, 90 jours, 20 %, 1 500 €, 10 000 €, franchises et plafonds) sont regroupés dans une configuration qui porte le numéro de version de la spec, pour qu'un changement de règle ne touche pas le code des agents.
+- [x] Un refus peut-il être prononcé de façon entièrement automatisée, ou doit-il être validé par un gestionnaire de sinistres ?
+  **Réponse (§ 10).** La spec prévoit des refus automatiques : demande non éligible (règle 1) et montant estimé nul (règle 3), avec un motif. **Point à faire valider** par le service juridique du client : l'article 22 du RGPD encadre les décisions fondées exclusivement sur un traitement automatisé.
 - [ ] Quelle erreur coûte le plus au métier : indemniser une fraude, ou refuser à tort une demande légitime ?
-  *Impact sur la conception : le niveau d'exigence du contrôle de fraude et le seuil d'escalade.*
+  **Ouvert**, mais la spec donne un indice : en mode dégradé, une demande de 1 500 € ou moins continue sans avis anti-fraude (§ 9). Le métier accepte donc un risque de fraude limité pour ne pas bloquer les petites demandes.
 - [ ] Quelle équipe traite les escalades, et quelle est sa capacité de traitement journalière ?
-  *Impact sur la conception : le taux d'escalade acceptable, donc la sévérité des bornes.*
+  **Réponse en partie.** Deux files humaines : `gestionnaire` et `cellule_fraude` (§ 8). Leur capacité reste **ouverte**. *Impact : le taux d'escalade acceptable.*
 
 ### Résultats attendus
 
-- [ ] Quel délai de décision vise-t-on pour une demande ?
-  *Impact sur la conception : le délai global par demande.*
-- [ ] Quels indicateurs mesureront le succès à trois mois : délai de décision, part de demandes bloquées, taux d'escalade, réclamations ?
-  *Impact sur la conception : les métriques suivies et les seuils des tests.*
-- [ ] Quelles décisions et quelles traces doivent être conservées, pour quelle durée, et qui en assure l'audit ?
-  *Impact sur la conception : le contenu du journal d'événements et sa durée de conservation.*
+- [x] Quel délai de décision vise-t-on pour une demande ?
+  **Réponse (§ 12).** Une issue en 10 secondes au plus de traitement automatisé, y compris quand le partenaire est lent, indisponible ou répond de manière non conforme.
+- [ ] Quels indicateurs mesureront le succès à trois mois ?
+  **Ouvert** pour le métier. Côté équipe, les métriques par agent sont fixées par `interface.md` (section 6).
+- [x] Quelles décisions et quelles traces doivent être conservées, et qui en assure l'audit ?
+  **Réponse en partie.** Chaque demande produit une fiche de décision (§ 11) avec sa trace et, s'il y a lieu, l'identifiant d'évaluation du partenaire, « à conserver pour audit » (contrat § 3). La durée de conservation et le responsable de l'audit restent **ouverts**.
 
-Éléments à recueillir auprès du client : `specs_metier.md`, le contrat du partenaire, un échantillon de demandes réelles anonymisées (dont des demandes restées bloquées) et les journaux d'une période de forte charge ou d'incidents. Les demandes réelles alimenteront les scénarios du plan d'épreuve.
+Encore à recevoir : les tests d'acceptance (`tests/acceptance/`) et le pilote du partenaire simulé (`scripts/partner_ctl.py`), cités par `interface.md` mais absents de l'archive.
 
 ## 2. Le choix du pattern : l'arbre de décision
 
-Les questions se posent dans l'ordre, et chaque réponse élimine une option. Q0 est issue de l'expression du besoin (section 1) ; Q1 à Q5 portent sur l'architecture. Les réponses sont provisoires en attendant `specs_metier.md` (voir le schéma 0).
+Les questions se posent dans l'ordre, et chaque réponse élimine une option. Q0 est issue de l'expression du besoin (section 1) ; Q1 à Q5 portent sur l'architecture (voir le schéma 0).
 
-| # | Question | Réponse provisoire | Ce qu'elle écarte ou ajoute |
+| # | Question | Réponse | Ce qu'elle écarte ou ajoute |
 |---|---|---|---|
-| Q0 | Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou de règles simples ? | En partie : seulement pour lire le texte libre des pièces | Écarte : tout confier à un LLM. L'éligibilité et les plafonds restent des règles en code |
-| Q1 | Un seul agent avec 10 à 15 outils suffit-il ? | Non | Écarte : l'agent unique, dont les rôles ne peuvent pas être prouvés séparément (E2) ; c'est le défaut de l'agent actuel |
-| Q2 | Les étapes sont-elles connues d'avance, et dans quel ordre ? | Oui : éligibilité et pièces, puis estimation, fraude, décision | Écarte : un planificateur LLM qui invente les étapes. Le routage se fait par règles, testables et bornables |
-| Q3 | Des sous-tâches peuvent-elles s'exécuter en parallèle ? | Oui : éligibilité et pièces | Retient : ces deux étapes en parallèle, puis le regroupement de leurs résultats |
-| Q4 | Faut-il un contrôle central qui garantit une décision ou une escalade pour chaque demande ? | Oui | Écarte : des agents qui se passent la main sans contrôle central ; personne ne garantirait alors la fin de chaque demande (E1) |
-| Q5 | Quelles métriques par agent faut-il rendre visibles ? | Latence, échecs, appels au partenaire | Ajoute : un journal d'événements à chaque étape, source des métriques (E6) |
+| Q0 | Le recours à un système agentique est-il justifié, au regard d'un traitement humain ou de règles simples ? | En partie : les règles sont chiffrées (§ 4 à § 10), l'avis de fraude vient d'un agent externe | Écarte : confier une règle à un LLM. Éligibilité, pièces, montant, indicateurs et décision restent en code |
+| Q1 | Un seul agent avec 10 à 15 outils suffit-il ? | Non | Écarte : l'agent unique. `interface.md` exige qu'un agent n'écrive qu'une seule section métier ; c'est aussi le défaut de l'agent actuel |
+| Q2 | Les étapes sont-elles connues d'avance, et dans quel ordre ? | Oui : éligibilité et pièces, estimation, anti-fraude, issue (§ 2) | Écarte : un planificateur LLM qui invente les étapes. Le parcours est fixé par la spec, testable et bornable |
+| Q3 | Des sous-tâches peuvent-elles s'exécuter en parallèle ? | Oui : éligibilité et vérification des pièces | Retient : ces deux contrôles en parallèle ; la demande de complément seulement si la demande est éligible |
+| Q4 | Faut-il un contrôle central qui garantit une décision ou une escalade pour chaque demande ? | Oui | Écarte : des agents qui se passent la main sans contrôle central ; personne ne garantirait l'issue de chaque demande, ni les 10 secondes |
+| Q5 | Quelles métriques par agent faut-il rendre visibles ? | Appels, échecs, latence, appels externes (`interface.md`) | Ajoute : une trace à chaque étape (agent, sections écrites), source des métriques |
 
-Pattern retenu : un orchestrateur central écrit en code (pattern superviseur) et quatre agents spécialistes ; éligibilité et pièces en parallèle ; un LLM seulement pour lire le texte libre des pièces ; un journal d'événements à chaque étape.
+Pattern retenu : une Coordination centrale écrite en code (pattern superviseur) qui délègue chaque contrôle et applique les règles de décision, et quatre agents de contrôle, chacun maître d'une seule section ; éligibilité et pièces en parallèle ; un seul appel au partenaire par demande ; une trace à chaque étape.
 
-La tension à arbitrer : le code déterministe est prévisible mais peu flexible ; un système tout agentique est flexible mais difficile à garantir. Les six exigences sont des garanties absolues (« jamais », « aucun », « rien d'autre »). D'où le choix : un squelette en code (orchestration, bornes, droits sur la mémoire, filtre sortant, validation des réponses A2A), et le LLM seulement à l'intérieur des agents qui lisent du texte libre.
+La tension à arbitrer : le code déterministe est prévisible mais peu flexible ; un système tout agentique est flexible mais difficile à garantir. Ici chaque règle est chiffrée et les engagements sont absolus (une issue pour chaque demande, 10 secondes, données limitées au contrat). D'où le choix : un squelette en code, l'avis externe venant du partenaire.
 
 Questions associées :
 
-- [ ] Un seul spécialiste suffit-il pour chaque demande, ou faut-il en combiner plusieurs ?
-- [ ] Qui décide de la suite : le code, une boucle, un superviseur, ou les agents se vérifient-ils eux-mêmes ? [E1] [E6]
+- [x] Un seul spécialiste suffit-il pour chaque demande, ou faut-il en combiner plusieurs ?
+  **Réponse.** Chaque demande passe par plusieurs contrôles, dans l'ordre de la spec ; le contrôle anti-fraude n'appelle le partenaire que si un indicateur est présent.
+- [x] Qui décide de la suite : le code, une boucle, un superviseur, ou les agents se vérifient-ils eux-mêmes ? [E1] [E6]
+  **Réponse.** La Coordination, en code. Les agents ne s'appellent jamais entre eux et ne choisissent pas l'étape suivante.
 
 ## 3. La carte des agents [E2]
 
 ### Rôles et frontières
 
-- [ ] Quels sont exactement les agents ? Éligibilité, pièces justificatives, estimation, fraude et orchestrateur : faut-il en ajouter un pour la décision finale ou la rédaction du motif ?
-- [ ] Pour chaque agent : que peut-il faire, et que ne doit-il surtout pas faire ?
-- [ ] Les outils sont-ils partagés entre agents, ou chacun a-t-il les siens ?
-- [ ] Qui rend la décision finale, et qui rédige le motif ?
-- [ ] Comment prouver par un test qu'un agent ne sort pas de son rôle ?
+- [x] Quels sont exactement les agents ?
+  **Réponse.** Cinq, un par section métier de `interface.md` : **Éligibilité** (`eligibilite`), **Pièces justificatives** (`pieces`), **Estimation** (`estimation`), **Anti-fraude**, liaison avec le partenaire (`avis_fraude`), et la **Coordination** (`issue`). « Une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section métier. »
+- [x] Pour chaque agent : que peut-il faire, et que ne doit-il surtout pas faire ?
+  **Réponse :** voir la carte des agents en fin de section et le schéma 1. Les frontières viennent du § 2 : l'éligibilité ne chiffre pas, l'estimation ne se prononce pas sur la fraude, l'avis de fraude vient du partenaire, seule la décision conclut.
+- [x] Les outils sont-ils partagés entre agents, ou chacun a-t-il les siens ?
+  **Réponse.** Chacun les siens. Seul l'agent Anti-fraude dispose du client du partenaire et du jeton d'accès (`PARTENAIRE_JETON`) ; seul l'agent Pièces peut adresser une demande de complément à l'espace assuré.
+- [x] Qui rend la décision finale, et qui rédige le motif ?
+  **Réponse.** La Coordination, qui écrit la section `issue` en appliquant les règles du § 10 dans l'ordre, et rédige le motif destiné à l'assuré ou au gestionnaire (§ 11).
+- [x] Comment prouver par un test qu'un agent ne sort pas de son rôle ?
+  **Réponse.** Deux preuves. La trace : pour chaque étape, `ecrit` liste les sections écrites ; un test vérifie que chaque agent n'écrit que sa section, sur les 28 scénarios. Et un test unitaire : un agent qui tente d'écrire la section d'un autre reçoit une erreur de droits.
 
 ### Le contrat de chaque agent
 
 Il s'agit du contrat interne entre agents, distinct d'un contrat d'API : l'entrée, la sortie, les erreurs possibles et une docstring qui dit en une phrase le rôle et la frontière de l'agent.
 
-- [ ] Pour chaque agent : quelle entrée, quelle sortie, quelles erreurs, et quelle docstring ?
-
-Exemple provisoire, pour l'agent Éligibilité :
+Exemple, pour l'agent Éligibilité :
 
 ```python
-def verifier_eligibilite(demande: Demande, contrat: Contrat) -> ResultatEligibilite:
-    """Dit si le contrat couvre la demande, avec le motif.
+def verifier_eligibilite(demande: Demande) -> ResultatEligibilite:
+    """Dit si le contrat couvre le sinistre (conditions E1 à E5 de la spec, § 4).
 
-    Ne calcule aucun montant, ne juge ni les pièces ni la fraude.
-    Erreurs : ContratIntrouvable, DonneesIncompletes.
+    Ne calcule aucun montant, n'applique pas le plafond, ne juge ni les pièces ni la fraude.
+    Erreurs : DonneesIncompletes.
     """
 ```
 
 | Agent | Entrée | Sortie | Erreurs possibles | Docstring (une phrase) |
 |---|---|---|---|---|
-| Éligibilité | Demande, contrat | Éligible oui ou non, motif | Contrat introuvable, données incomplètes | Dit si le contrat couvre la demande, avec le motif |
-| Pièces justificatives | | | | |
-| Estimation | | | | |
-| Fraude (liaison avec le partenaire) | | | | |
-| Orchestrateur | | | | |
+| Éligibilité | contrat et sinistre de la demande | éligible oui ou non ; conditions non remplies | données incomplètes | Dit si le contrat couvre le sinistre, sans chiffrer |
+| Pièces justificatives | pièces, type de sinistre, dépôts de l'espace assuré | complet, ou pièces manquantes ou illisibles ; factures lisibles ; compléments demandés | données incomplètes | Dit si les pièces exigées sont présentes et lisibles, et demande les compléments, sans conclure la demande |
+| Estimation | montant déclaré, formule, factures lisibles | montant justifié, montant retenu, montant estimé | données incomplètes | Calcule le montant remboursable, franchise et plafond compris, sans juger la fraude |
+| Anti-fraude | champs utiles de la demande, montant justifié | non requis ; ou avis (niveau, score, indicateurs, `evaluation_id`) ; ou indisponible avec la raison | délai dépassé, erreur du service, réponse non conforme : toutes rendent « indisponible », jamais une exception | Calcule les indicateurs F1 à F4 et, si l'un est présent, obtient l'avis du partenaire en un seul appel, sans jamais émettre d'avis lui-même |
+| Coordination | toutes les sections | section `issue` ; fiche de décision | borne atteinte, agent en échec : toutes deux mènent à une escalade motivée | Délègue chaque contrôle, applique les règles de décision dans l'ordre et conclut, sans refaire aucun contrôle |
 
 ### Garde-fous et métriques de bon fonctionnement, par agent
 
-- [ ] Quels garde-fous chaque agent doit-il contenir ?
-- [ ] Quelle métrique dit qu'il fonctionne bien ?
-
-Exemple : pour l'agent Pièces, le texte des justificatifs vient du client ; il est traité comme une donnée et filtré avant d'entrer dans un prompt, sinon une pièce piégée pourrait donner des ordres à l'agent.
-
 | Agent | Garde-fou | Métrique de bon fonctionnement |
 |---|---|---|
-| Éligibilité | | |
-| Pièces justificatives | | |
-| Estimation | | |
-| Fraude (liaison avec le partenaire) | | |
-| Orchestrateur | | |
+| Éligibilité | le motif cite chaque condition non remplie ; aucun accès au montant | échecs ; refus par condition (NOM-02, NOM-03, NOM-04, NOM-10, NOM-11 en couvrent chacune une) |
+| Pièces justificatives | demandes de complément bornées (2 au plus) ; la demande de complément n'est faite que si la demande est éligible | part des demandes avec complément ; échecs |
+| Estimation | le montant n'est jamais négatif, jamais supérieur au plafond de la formule, arrondi au centime (NOM-05 le vérifie) | échecs ; latence |
+| Anti-fraude | filtre sortant en liste blanche ; un seul appel par dossier (marqueur écrit par la Coordination avant la délégation) ; abandon à 3 s ; réponse contrôlée avant usage (chantier 2) | appels externes, réponses écartées, part des demandes en mode dégradé |
+| Coordination | bornes vérifiées avant chaque délégation ; seule à écrire `issue` | étapes consommées par demande, bornes atteintes (`arret`), part d'escalades |
 
 ### Le point ambigu
 
 Le brief demande de le trancher, et il sera questionné à la validation du dossier.
 
-- [ ] Quel est le point ambigu entre deux agents, et qui en est le seul responsable ?
-- [ ] Qui déclenche la « suspicion de fraude » qui mène à l'appel du partenaire ?
+- [x] Quel est le point ambigu entre deux agents, et qui en est le seul responsable ?
+  **Réponse : le plafond de garantie.** La spec le range dans la section éligibilité (§ 4), mais « le contrôle d'éligibilité ne chiffre pas la demande » (§ 2), et la section estimation (§ 6) ne le cite pas. **Choix : l'Estimation l'applique**, parce que le plafond est un calcul de montant. Le scénario NOM-05 le confirme : 4 200 € déclarés, moins 300 € de franchise, soit 3 900 €, plafonnés à 3 000 € remboursés.
+- [x] Qui déclenche le contrôle anti-fraude qui mène à l'appel du partenaire ?
+  **Réponse (§ 7).** Il n'y a pas de « suspicion » à juger : le contrôle est requis dès qu'un des quatre indicateurs F1 à F4 est présent. L'agent Anti-fraude les calcule, après l'Estimation, car F4 compare le montant déclaré au montant justifié.
 
-Candidats à examiner :
+Autres frontières tranchées :
 
-| Responsabilité | Agents qui peuvent la revendiquer |
-|---|---|
-| Déclarer une suspicion de fraude | Pièces (une incohérence), estimation (un montant aberrant), fraude |
-| Rejeter une demande dont les pièces manquent | Pièces, éligibilité, orchestrateur |
-| Appliquer le plafond du contrat | Estimation, éligibilité |
-
-Le choix se justifie par `specs_metier.md`. Seul repère donné par le brief : « l'éligibilité ne fait pas d'estimation, l'estimation ne juge pas la fraude ».
+| Responsabilité | Agents qui pourraient la revendiquer | Choix et raison |
+|---|---|---|
+| Appliquer le plafond | Éligibilité, Estimation | Estimation (point ambigu ci-dessus) |
+| Escalader pour pièces manquantes | Pièces, Coordination | Pièces le constate ; la Coordination escalade (règle 2), car « seule la décision conclut la demande » (§ 2) |
+| Calculer le montant justifié | Pièces, Estimation | Estimation (§ 6), à partir des factures lisibles fournies par Pièces |
+| Un montant déclaré supérieur aux factures | Pièces (« cohérence avec la déclaration », § 5), Anti-fraude (F4, § 7) | Anti-fraude, par l'indicateur F4 ; ce n'est pas un motif de demande de complément. Le scénario AF-06 le confirme : 2 000 € déclarés, 1 500 € justifiés, demande acceptée avec un avis faible |
 
 ### Dépendances et parallélisme
 
-Le brief range ces deux points dans la carte des agents.
+- [x] Quelles étapes dépendent les unes des autres, et lesquelles peuvent s'exécuter en parallèle ?
+  **Réponse.** Éligibilité et vérification des pièces sont indépendantes et tournent en parallèle. L'Estimation attend les factures lisibles de Pièces. L'Anti-fraude attend l'Estimation (F4). La Coordination conclut en dernier. L'appel au partenaire n'est jamais lancé plus tôt : appeler pour une demande qui sera refusée gaspillerait l'unique appel autorisé et enverrait des données sans nécessité.
+- [x] Quand deux résultats obtenus en parallèle se contredisent (par exemple : éligible, mais pièces incomplètes), quelle règle l'emporte ?
+  **Réponse.** L'ordre des règles du § 10 : la première qui s'applique fixe l'issue. Une demande non éligible est refusée quel que soit l'état de ses pièces (règle 1), et la demande de complément n'est alors jamais adressée à l'assuré.
 
-- [ ] Quelles étapes dépendent les unes des autres, et lesquelles peuvent s'exécuter en parallèle ?
-- [ ] Quand deux résultats obtenus en parallèle se contredisent (par exemple : éligible, mais pièces incomplètes), quelle règle l'emporte ?
-
-### Tableau à remplir : la carte des agents
+### La carte des agents
 
 | Agent | Rôle | Reçoit | Renvoie | Ne fait jamais | Code ou LLM |
 |---|---|---|---|---|---|
-| Orchestrateur | | | | | |
-| Éligibilité | | | | | |
-| Pièces justificatives | | | | | |
-| Estimation | | | | | |
-| Fraude (liaison avec le partenaire) | | | | | |
+| Coordination | délègue, vérifie les bornes, applique les règles du § 10, conclut | toutes les sections | `issue`, fiche de décision | refaire un contrôle | code |
+| Éligibilité | conditions E1 à E5 de la spec | contrat, sinistre | éligible, conditions non remplies | chiffrer, appliquer le plafond, juger les pièces ou la fraude | code |
+| Pièces justificatives | présence, lisibilité, cohérence des pièces ; demandes de complément | pièces, dépôts de l'espace assuré | complet ou manquantes, factures lisibles | conclure ou escalader, chiffrer, juger la fraude | code |
+| Estimation | montant justifié, retenu, estimé ; franchise et plafond | montant déclaré, formule, factures lisibles | montants | juger la fraude, revenir sur l'éligibilité | code |
+| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | champs utiles de la demande, montant justifié | non requis, avis ou indisponible | émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel | code |
 
 ## 4. L'orchestration et la terminaison garantie [E1] [E6]
 
-- [ ] Comment l'orchestrateur délègue-t-il chaque étape, et qui choisit l'étape suivante ?
-- [ ] Comment l'orchestrateur garantit-il que chaque demande se termine par une décision ou une escalade humaine motivée ?
-- [ ] Quels sont les états finaux possibles ? La machine à états doit montrer que chaque chemin y mène.
-- [ ] Comment borne-t-on les boucles : condition de sortie, nombre de tours maximum, état « Done », artefact de sortie ?
-- [ ] Quelles bornes provisoires au départ, et sur quelle base les choisit-on ?
-- [ ] Que se passe-t-il quand une borne est atteinte ? Jamais un arrêt silencieux : une escalade dont le motif nomme la borne.
-- [ ] Qu'est-ce qu'une escalade « motivée » : quel motif, quelles étapes déjà faites, quelles preuves, et à qui l'envoie-t-on ?
-- [ ] Que se passe-t-il quand un agent interne plante, renvoie un format invalide ou dépasse son délai ?
-- [ ] Quelle gestion d'erreur observable met-on en place dans le workflow ?
+- [x] Quel schéma d'orchestration : superviseur qui délègue, chaîne séquentielle, mixte ?
+  **Réponse : mixte.** Un superviseur, la Coordination, délègue chaque contrôle ; les deux premiers tournent en parallèle, la suite s'enchaîne dans l'ordre de la spec. Les agents ne s'appellent jamais entre eux.
+- [x] Qui décide qu'une demande est terminée ?
+  **Réponse.** La Coordination seule, en écrivant la section `issue` (« seule la décision conclut la demande », § 2). Elle applique les règles du § 10 dans l'ordre ; la première qui s'applique fixe l'issue.
+- [x] Quels sont les états finaux possibles ?
+  **Réponse (§ 2, § 11).** Deux issues seulement : une **décision** (acceptée ou refusée) ou une **escalade** vers `gestionnaire` ou `cellule_fraude`, avec un motif lisible. Il n'existe pas d'état « en attente » sans qu'un humain en ait été saisi. Le schéma 2 montre que chaque chemin mène à l'une de ces issues.
+- [x] Comment borne-t-on les boucles ?
+  **Réponse.** Une seule boucle existe dans le parcours : la demande de complément de pièces, qui reprend le contrôle après chaque dépôt de l'assuré (§ 5). Elle est bornée par le nombre de compléments, par la détection d'un état déjà vu et par les bornes globales (étapes et durée).
+- [x] Quelles bornes au départ, et sur quelle base les choisit-on ?
+  **Réponse :** voir le tableau ci-dessous. La durée vient de l'engagement de service ; le nombre d'étapes vient du chemin le plus long prévu par la spec et les scénarios ; le délai du partenaire vient de son contrat.
+- [x] Que se passe-t-il quand une borne est atteinte ?
+  **Réponse.** Jamais un arrêt silencieux. La demande reçoit une issue, une escalade vers `gestionnaire`, et sa fiche le signale dans `arret` avec le nom de la borne (`interface.md`). La file de destination n'est pas fixée par la spec : **choix à confirmer** avec le client.
+- [x] Qu'est-ce qu'une escalade « motivée » ?
+  **Réponse (§ 8).** Elle précise la file destinataire et un motif lisible par le gestionnaire qui reprend le dossier : la règle ou la borne en cause, et l'étape atteinte. La trace complète accompagne la fiche.
+- [x] Que se passe-t-il quand un agent interne plante, renvoie un format invalide ou dépasse son délai ?
+  **Réponse.** Les agents internes sont du code déterministe : relancer avec la même entrée redonnerait la même erreur. Pas de relance : escalade immédiate vers `gestionnaire`, motif « erreur interne » avec le nom de l'agent, et l'échec compte dans les métriques. L'appel au partenaire suit une autre règle, celle de son contrat : jamais de relance, et toute défaillance rend l'avis « indisponible » (chantier 2).
+- [x] Quelle gestion d'erreur observable met-on en place dans le workflow ?
+  **Réponse.** Chaque étape écrit une ligne de trace avec son statut ; chaque échec compte dans `echecs` ; chaque arrêt par une borne est signalé dans `arret`.
 
-### Tableau à remplir : les bornes provisoires
+### Les bornes provisoires
 
-Les valeurs de départ sont provisoires. Le plan d'épreuve du chantier 2 les confirme ou les ajuste, et chaque ajustement entre dans le journal (voir [chantier 2, section 10](chantier-2-a2a-epreuve.md)).
+Les valeurs fixées par la spec ou le contrat ne sont pas provisoires. Les autres sont des valeurs de départ : le plan d'épreuve du chantier 2 les confirme ou les ajuste, et chaque ajustement entre dans le journal (voir [chantier 2, section 10](chantier-2-a2a-epreuve.md)).
 
 | Borne | Valeur de départ | Justification | Scénario d'épreuve qui la teste |
 |---|---|---|---|
-| Étapes d'orchestration par demande | | | Piège à boucle |
-| Appels par agent et par demande | | | Piège à boucle |
-| Allers-retours entre deux agents | | | Piège à boucle |
-| Délai global par demande | | | Partenaire lent |
-| Détection d'un état déjà vu | | | Piège à boucle |
-| Budget de tokens ou de coût par demande | | | Cas nominal |
+| Durée par demande (`duree_max_s`) | 10 s | engagement de service (§ 12), maximum autorisé par `interface.md`. Si la mesure montre qu'une demande arrêtée à 10 s dépasse l'engagement le temps de produire sa fiche, la borne descendra à 8 s | PAN-02 (partenaire lent) |
+| Étapes par demande (`etapes_max`) | 8 | chemin nominal : 5 étapes (éligibilité, pièces, estimation, anti-fraude, issue) ; plus 2 demandes de complément ; plus 1 de marge | BCL-01 (piège à boucle) |
+| Demandes de complément par demande | 2 | NOM-07 et PAN-01 en demandent une ; aucun scénario n'en justifie davantage | BCL-01 |
+| Même état vu deux fois | arrêt immédiat | une pièce toujours illisible après un nouveau dépôt ne fait pas avancer la demande | BCL-01 |
+| Appels au partenaire par dossier | 1 exactement | contrat, § 6 : un seul appel, aucune relance, tout doublon est refusé et signalé | PAN-01, PAN-02, scénarios `invalide` |
+| Délai d'un appel au partenaire | 3 s | contrat, § 5 : le client abandonne au plus tard 3 s après l'envoi | PAN-02 |
+| Délai par contrôle interne | 1 s | contrôles en code, sans réseau ; une seconde laisse du temps à l'appel externe | cas nominal |
+| Budget de tokens ou de coût | sans objet | aucun LLM dans le chemin de décision | (aucun) |
+
+Lecture du scénario BCL-01 : la facture est illisible, et le seul dépôt de l'assuré est une facture tout aussi illisible. Ce n'est pas « aucun dépôt du type demandé » (§ 5), donc la spec demanderait un nouveau complément, sans fin. Le scénario attend une escalade avec `arret` : c'est la borne « même état vu deux fois » qui l'arrête. Cette lecture sera vérifiée contre les tests d'acceptance quand ils seront fournis.
 
 ## 5. La mémoire partagée
 
 Le brief demande une mémoire partagée de la demande, avec un état commun et un accès maîtrisé.
 
-- [ ] Que contient l'état partagé de la demande ? Par exemple : l'identifiant, les données de la demande, le résultat de chaque agent, l'étape en cours, les compteurs, l'historique, le statut final et le motif d'escalade.
-- [ ] Sous quelle forme la mémoire partagée est-elle implémentée : objet en mémoire, base de données, fichier ?
-- [ ] Accès maîtrisé : qui lit et qui écrit quels champs ? L'estimation doit-elle voir le score de fraude ?
-- [ ] Que se passe-t-il si deux agents qui tournent en parallèle écrivent en même temps ?
-- [ ] Peut-on reprendre une demande après un crash, sans la bloquer de nouveau ?
-- [ ] Quels champs de la mémoire ne doivent jamais partir chez le partenaire ? [E3]
-- [ ] Où range-t-on les identifiants de la tâche A2A (`taskId`, `contextId`), pour pouvoir suivre ou annuler une tâche chez le partenaire même après un crash ?
+- [x] Que contient l'état partagé de la demande ?
+  **Réponse.** La demande reçue (§ 3), en lecture seule ; les cinq sections métier (`eligibilite`, `pieces`, `estimation`, `avis_fraude`, `issue`) ; une section de contrôle (compteurs des bornes, marqueur d'appel au partenaire, `arret`) ; la trace, en ajout seul.
+- [x] Sous quelle forme, et où vit-elle ?
+  **Réponse.** En mémoire, un objet par demande, créé au début de `traiter_demande` et jamais partagé entre deux demandes : le traitement d'une demande n'en retarde pas une autre (§ 12). À la fin, la fiche de décision est construite depuis `issue`, `avis_fraude`, la trace et `arret`.
+- [x] Accès maîtrisé : qui lit et qui écrit quels champs ?
+  **Réponse :** voir le tableau ci-dessous. Chaque agent écrit sa seule section, une seule fois ; il lit seulement ce dont il a besoin.
+- [x] Comment un agent évite-t-il d'écraser le travail d'un autre ?
+  **Réponse.** Une table fixe donne le propriétaire de chaque section ; toute écriture d'un agent dans une autre section est refusée par une erreur de droits. Chaque section métier ne s'écrit qu'une fois. Éligibilité et Pièces, qui tournent en parallèle, écrivent dans des sections différentes : aucun conflit possible. La trace enregistre l'agent et les sections écrites à chaque étape, ce qui rend la règle vérifiable par un test.
+- [x] Peut-on reprendre une demande après un crash, sans la bloquer de nouveau ?
+  **Réponse.** Une demande se traite en 10 s au plus : en cas de crash, elle est reprise depuis le début, les contrôles en code donnant le même résultat. **Une exception, imposée par le contrat du partenaire** : un seul appel par dossier, et un doublon est signalé comme manquement. La Coordination écrit donc le marqueur « appel au partenaire délégué » dans `controle` juste avant de déléguer l'appel ; à la reprise, un marqueur sans avis rend l'avis « indisponible » (mode dégradé), et le partenaire n'est jamais rappelé.
+- [x] Quels champs de la mémoire ne doivent jamais partir chez le partenaire ? [E3]
+  **Réponse (contrat, § 2).** L'identité et les coordonnées de l'assuré (nom, prénom, e-mail, téléphone, adresse, code postal complet), l'IBAN, l'identifiant client et le numéro de contrat, la description libre du sinistre, les pièces et leur contenu. Seuls sept champs partent, construits par l'agent Anti-fraude (chantier 2).
+- [x] Où range-t-on l'identifiant de l'évaluation du partenaire ?
+  **Réponse.** Dans la section `avis_fraude` : niveau, score, indicateurs, `evaluation_id` (à conserver pour audit, contrat § 3) et version du modèle. Le contrat ne prévoit qu'un appel `message/send` qui renvoie une tâche terminée : pas d'identifiant de tâche à suivre ni à annuler.
 
-### Tableau à remplir : les droits sur la mémoire
+### Les droits sur la mémoire
 
 | Section de l'état | Écrite par | Lue par |
 |---|---|---|
-| Données de la demande | | |
-| Résultat de l'éligibilité | | |
-| Résultat des pièces | | |
-| Résultat de l'estimation | | |
-| Résultat de la fraude | | |
-| Identifiants de la tâche A2A | | |
-| Étape en cours, compteurs, statut final, motif d'escalade | | |
-| Journal d'événements | | |
+| `demande` (données reçues) | à la création, puis lecture seule | Éligibilité (contrat, sinistre) ; Pièces (pièces, sinistre, espace assuré) ; Estimation (montant déclaré, formule) ; Anti-fraude (sinistre, dates, historique, code postal pour le département) ; Coordination |
+| `eligibilite` | Éligibilité | Coordination |
+| `pieces` | Pièces | Estimation (factures lisibles), Coordination |
+| `estimation` | Estimation | Anti-fraude (montant justifié), Coordination |
+| `avis_fraude` | Anti-fraude | Coordination |
+| `issue` | Coordination | fiche de décision |
+| `controle` : compteurs des bornes, marqueur d'appel au partenaire, `arret` | Coordination | Coordination |
+| `trace` : une ligne par étape, ajout seul | chaque étape, au nom de l'agent qui la réalise | métriques, fiche de décision |
+
+L'agent Anti-fraude ne lit ni l'identité de l'assuré, ni son IBAN, ni le contenu des pièces : il ne peut pas envoyer ce qu'il ne voit pas.
 
 ## 6. L'observabilité et le plan de preuve [E6]
 
-Le partenaire peut être lent, en panne ou de mauvaise foi : chaque affirmation sur le comportement de l'équipe doit pouvoir se prouver par une trace ou par un test. Le monitorage se code au chantier 2, mais le journal d'événements vit dans la mémoire partagée : s'il n'est pas prévu ici, il n'y aura rien à mesurer plus tard.
+Le partenaire peut être lent, en panne ou répondre de manière non conforme : chaque affirmation sur le comportement de l'équipe doit se prouver par une trace ou par un test.
 
-- [ ] Quel événement enregistre-t-on à chaque étape : qui, quoi, quand, combien de temps, avec quel résultat ?
-- [ ] Quelles métriques par agent en découlent ?
-- [ ] Quels éléments observe-t-on au niveau de l'équipe et de son orchestration ?
-- [ ] Comment montrer qu'une demande a suivi le bon chemin, avec une trace rejouable par demande ?
-- [ ] Comment prouver E1 : sur tous les scénarios de `eval/scenarios.jsonl`, le statut final est-il toujours une décision ou une escalade ?
-- [ ] Comment prouver E2 : quel test confie à un agent une tâche hors de son rôle, et quel refus attend-il ?
+- [x] Quel événement enregistre-t-on à chaque étape ?
+  **Réponse (`interface.md`).** Une ligne de `trace` par étape : l'agent, les sections écrites (`ecrit`), puis l'action, la durée et le statut.
+- [x] Quelles métriques par agent en découlent ?
+  **Réponse (`interface.md`).** Pour chaque agent : `appels` (étapes réalisées), `echecs` (erreur, délai dépassé, réponse écartée), `latence_ms` (durée moyenne d'une étape), `appels_externes`. Elles sont renvoyées par `traiter_lot`.
+- [x] Quels éléments observe-t-on au niveau de l'équipe et de son orchestration ?
+  **Réponse.** Les étapes consommées par demande, les bornes atteintes (`arret`), la part d'escalades par file, la part des demandes traitées en mode dégradé.
+- [x] Comment montrer qu'une demande a suivi le bon chemin ?
+  **Réponse.** Par sa trace : la suite des agents et des sections écrites se compare au chemin attendu par les règles du § 10.
+- [x] Comment prouver [E1] sur tous les scénarios ?
+  **Réponse.** Un test rejoue les 28 scénarios de `eval/scenarios.jsonl` et vérifie que chaque fiche porte une issue (`decision` ou `escalade`), conforme au champ `attendu`, en 10 s au plus.
+- [x] Comment prouver [E2] ?
+  **Réponse.** Sur les mêmes rejeux, un test vérifie dans la trace que chaque section métier n'est écrite que par son agent propriétaire ; un test unitaire fait écrire un agent dans une autre section et attend une erreur de droits.
 
 Le filtre des données sortantes, la validation des réponses du partenaire et le mode dégradé sont traités au [chantier 2](chantier-2-a2a-epreuve.md).
 
+## Points ouverts
+
+| Point | Pourquoi il reste ouvert | Qui tranche |
+|---|---|---|
+| File de l'escalade quand une borne est atteinte | la spec ne la fixe pas ; choix actuel : `gestionnaire` | le client |
+| Refus automatiques (règles 1 et 3) | article 22 du RGPD | le service juridique du client |
+| Lecture du scénario BCL-01 | dépôt illisible : la spec ne dit pas s'il compte comme un dépôt | les tests d'acceptance, absents de l'archive |
+| Durée de 10 s ou 8 s | dépend du temps mesuré pour produire la fiche | le plan d'épreuve du chantier 2 |
+| Traitement d'un lot en parallèle | « une demande n'en retarde pas une autre » (§ 12) : à mesurer sur PAN-01 et PAN-02 | le plan d'épreuve du chantier 2 |
+
 ## Schémas
 
-Première proposition, provisoire : les choix qui dépendent de `specs_metier.md` (propriétaire de la suspicion de fraude, refus bloquant pour pièces manquantes, valeurs des bornes) seront confirmés ou corrigés à sa lecture. Chaque schéma existe en `.drawio`, modifiable sur [app.diagrams.net](https://app.diagrams.net/), et en `.png`. Ils se régénèrent avec `scripts/make_schemas_ch1.py`.
+Fondés sur `specs_metier.md` (version 3.2) et `interface.md`. Restent provisoires : les valeurs des bornes, à éprouver au chantier 2, et la file de l'escalade sur borne atteinte. Chaque schéma existe en `.drawio`, modifiable sur [app.diagrams.net](https://app.diagrams.net/), et en `.png`. Ils se régénèrent avec `scripts/make_schemas_ch1.py`.
 
 ### 0. Le choix du pattern : l'arbre de décision
 
@@ -230,18 +273,18 @@ Une question métier (Q0), puis cinq questions d'architecture posées dans l'ord
 
 ### 1. La carte des agents
 
-Rôles, frontières (avec le point ambigu tranché), dépendances et parallélisme. Fichiers : [schema-1-carte-des-agents.drawio](schemas/schema-1-carte-des-agents.drawio), [PNG](schemas/schema-1-carte-des-agents.png).
+Les cinq agents, la section que chacun écrit, ses interdits, le point ambigu tranché (le plafond) et les dépendances. Fichiers : [schema-1-carte-des-agents.drawio](schemas/schema-1-carte-des-agents.drawio), [PNG](schemas/schema-1-carte-des-agents.png).
 
 ![Carte des agents](schemas/schema-1-carte-des-agents.png)
 
 ### 2. L'orchestration et la terminaison garantie
 
-Délégations, conditions d'arrêt, bornes provisoires ; chaque chemin finit par une décision ou une escalade humaine motivée. Fichiers : [schema-2-orchestration.drawio](schemas/schema-2-orchestration.drawio), [PNG](schemas/schema-2-orchestration.png).
+Les règles de décision du § 10 dans l'ordre, la boucle de la demande de complément, le mode dégradé, les bornes ; chaque chemin finit par une décision ou une escalade motivée. Fichiers : [schema-2-orchestration.drawio](schemas/schema-2-orchestration.drawio), [PNG](schemas/schema-2-orchestration.png).
 
 ![Orchestration et terminaison garantie](schemas/schema-2-orchestration.png)
 
 ### 3. La mémoire partagée de la demande
 
-Sections, propriétaire de chaque section, droits de lecture, orchestrateur seul écrivain, sauvegarde après chaque étape, journal d'événements. Fichiers : [schema-3-memoire-partagee.drawio](schemas/schema-3-memoire-partagee.drawio), [PNG](schemas/schema-3-memoire-partagee.png).
+Les sections, l'agent propriétaire de chacune, les droits de lecture, la règle d'écriture et le lieu de vie de l'état. Fichiers : [schema-3-memoire-partagee.drawio](schemas/schema-3-memoire-partagee.drawio), [PNG](schemas/schema-3-memoire-partagee.png).
 
 ![Mémoire partagée de la demande](schemas/schema-3-memoire-partagee.png)
