@@ -130,7 +130,7 @@ L'enveloppe reprend exactement celle de l'exemple du contrat. Le schéma JSON of
 
 ### Où il s'applique
 
-Dans l'agent Anti-fraude, juste avant l'appel, et nulle part ailleurs : c'est le seul point de sortie vers le partenaire.
+Dans l'agent Anti-fraude, juste avant l'appel, et nulle part ailleurs : c'est le seul point de sortie vers le partenaire. Ce que le partenaire reçoit est défini par son contrat, pas par la mémoire de la demande : celle-ci n'est jamais exposée par A2A.
 
 L'agent ne lit pas la mémoire de la demande. La Coordination l'appelle directement, après l'Estimation, et lui passe seulement huit données : la référence, le type de sinistre, la date de survenance, le montant déclaré, la date de souscription, le nombre de sinistres sur 12 mois, le code postal et le montant justifié (résultat de l'Estimation). Ce sont exactement celles qu'exigent les indicateurs F1 à F4 et les sept champs du contrat.
 

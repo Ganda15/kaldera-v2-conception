@@ -271,6 +271,8 @@ Le brief demande une mémoire partagée de la demande, avec un état commun et u
 
 ### Les droits sur la mémoire
 
+**Mémoire de session et informations exposées : deux niveaux distincts.** L'état de la demande est une mémoire de session : il vit le temps du traitement, dans la plateforme, et n'est jamais exposé. Sa gestion est un choix interne : seule la Coordination le lit et l'écrit. `interface.md` fixe autre chose : ce que la plateforme expose au système d'information et à la suite d'acceptance (fiche de décision, trace, métriques). La trace y dit, pour chaque étape, quel agent a produit la section remplie (`agent`, `ecrit`). Le partenaire, lui, ne voit que les sept champs de son contrat (A2A) : la mémoire d'un agent n'est jamais exposée par A2A.
+
 Seule la Coordination lit et écrit l'état. Le tableau dit, pour chaque section, quel agent fournit le résultat et à qui la Coordination en passe ensuite le contenu.
 
 | Section de l'état | Remplie par le résultat de | Rangée par | Contenu passé ensuite à |
