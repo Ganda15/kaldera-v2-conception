@@ -62,14 +62,14 @@ s.box("kaldera", "Système Kaldera", 30, 95, 1070, 960, S_CONTENEUR)
 s.box("externe", "Partenaire anti-fraude (externe)", 1120, 95, 390, 960,
       S_CONTENEUR + f"fillColor=#f7f7f7;strokeColor={GRIS};dashed=1;fontColor=#555555;")
 
-s.box("demande", "<b>Demande</b> (§ 3)<br>assuré, contrat, sinistre, pièces, historique ; le filtre n'en lit que "
-                 "les champs utiles<br><br>"
+s.box("demande", "<b>Demande</b> (§ 3)<br>assuré, contrat, sinistre, pièces, historique ; lue seulement par "
+                 "la Coordination<br><br>"
                  f'<font color="{ROUGE}"><b>Ne part jamais</b> : nom, prénom, e-mail, téléphone, adresse, code postal '
                  "complet, IBAN, identifiant client, numéro de contrat, description, pièces</font>",
       60, 130, 260, 165, S_NOTE)
-s.box("af", "<b>Agent Anti-fraude</b> · écrit : avis_fraude<br>calcule F1 à F4 ; aucun indicateur : avis non requis, "
-            "aucun appel", 380, 130, 280, 85, S_AGENT)
-s.box("coord", "<b>Coordination</b><br>écrit le marqueur d'appel dans controle, puis délègue l'appel", 720, 130, 290, 85,
+s.box("af", "<b>Agent Anti-fraude</b> · section : avis_fraude<br>reçoit 8 données ; calcule F1 à F4 ; aucun indicateur : "
+            "avis non requis, aucun appel", 380, 130, 280, 85, S_AGENT)
+s.box("coord", "<b>Coordination</b><br>seule à lire et écrire l'état ; écrit le marqueur d'appel, puis appelle l'agent", 720, 130, 290, 85,
       S_ORCH)
 s.box("filtre", "<b>Filtre sortant [E3]</b><br>message neuf : exactement les sept champs du contrat, dont deux calculés "
                 "(ancienneté, département) ; validé contre un schéma strict ; en cas d'échec, rien ne part",
@@ -87,7 +87,7 @@ s.box("valid", "<b>Validation de la réponse [E4]</b>, cinq niveaux dans l'ordre
                "5. cohérence : même dossier, score entre 0 et 1, niveau cohérent avec le score (INV-04, INV-01, INV-02)",
       720, 430, 290, 200, S_ORCH)
 s.box("d1", "Avis conforme<br>et reçu à temps ?", 765, 665, 200, 100, S_LOSANGE)
-s.box("ok", "<b>avis_fraude écrit</b><br>niveau, score, indicateurs, evaluation_id (audit), version_modele", 380, 680, 280, 70,
+s.box("ok", "<b>avis_fraude</b> rangé par la Coordination<br>niveau, score, indicateurs, evaluation_id (audit), version_modele", 380, 680, 280, 70,
       FIN_OK)
 s.box("regle4", "<b>Coordination, règle 4</b><br>faible : poursuit · modéré : gestionnaire · élevé : cellule_fraude",
       60, 680, 260, 70, S_ORCH + MILIEU)
@@ -109,8 +109,9 @@ s.box("contrat", "<b>Contrat v2.0</b><br>• requête : une partie data, sept ch
                  "• erreurs : 401, 503, -32700, -32600, -32601, -32602, -32029",
       1140, 560, 350, 175, S_NOTE)
 
-s.edge("x1", "demande", "filtre", E_DEP, "lit", [(350, 212), (350, 323)], sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("x2", "coord", "af", E_DELEG, "délègue", sortie=(0, 0.5), entree=(1, 0.5))
+s.edge("x1", "demande", "coord", E_DEP, "lit", [(190, 112), (865, 112)], sortie=(0.5, 0), entree=(0.5, 0))
+s.edge("x2", "coord", "af", E_DELEG, "8 données", sortie=(0, 0.3), entree=(1, 0.3))
+s.edge("x2b", "af", "coord", E_DEP, "résultat", sortie=(1, 0.78), entree=(0, 0.78))
 s.edge("x3", "af", "filtre", E_DEP, "indicateur présent", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("x4", "filtre", "appel", E_DEP, "7 champs", sortie=(1, 0.52), entree=(0, 0.5))
 s.edge("x5", "appel", "partenaire", E_DEP, "message/send", sortie=(1, 0.5), entree=(0, 0.5))

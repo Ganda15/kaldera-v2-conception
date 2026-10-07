@@ -6,7 +6,7 @@ Exigences concernées : [E3], [E4], [E5] et [E6]. Le brief résume l'enjeu en un
 
 Sources : [`external_agent/contrat.md`](external_agent/contrat.md) (version 2.0), [`docs/specs_metier.md`](docs/specs_metier.md) (version 3.2), [`docs/interface.md`](docs/interface.md) et [`eval/scenarios.jsonl`](eval/scenarios.jsonl) (28 scénarios), reçus le 06/10/2026. Les renvois « contrat § » désignent les sections du contrat, les renvois « § » seuls celles de `specs_metier.md`.
 
-Ce chantier s'appuie sur l'équipe du [chantier 1](chantier-1-equipe-orchestration.md) : l'agent **Anti-fraude** est le seul à parler au partenaire, il écrit la section `avis_fraude`, et la **Coordination** applique la règle 4 du § 10 à partir de cette section.
+Ce chantier s'appuie sur l'équipe du [chantier 1](chantier-1-equipe-orchestration.md) : l'agent **Anti-fraude** est le seul à parler au partenaire ; son résultat remplit la section `avis_fraude`, que la **Coordination** range dans l'état de la demande avant d'appliquer la règle 4 du § 10. La Coordination est la seule à lire et à écrire cet état : elle appelle chaque agent directement, lui passe les données utiles et range son résultat.
 
 Démarche : comme au chantier 1, le cadrage métier (section 1) précède les choix de conception (section 2, arbre de décision) et leur détail (sections 3 à 7) ; l'épreuve vient ensuite (sections 8 et 9).
 
@@ -130,7 +130,14 @@ L'enveloppe reprend exactement celle de l'exemple du contrat. Le schéma JSON of
 
 ### Où il s'applique
 
-Dans l'agent Anti-fraude, juste avant l'appel, et nulle part ailleurs : c'est le seul point de sortie vers le partenaire. Il ne lit, dans la mémoire de la demande, que ce dont il a besoin (chantier 1, droits sur la mémoire) : il ne voit ni l'identité de l'assuré, ni son IBAN, ni le contenu des pièces.
+Dans l'agent Anti-fraude, juste avant l'appel, et nulle part ailleurs : c'est le seul point de sortie vers le partenaire.
+
+L'agent ne lit pas la mémoire de la demande. La Coordination l'appelle directement, après l'Estimation, et lui passe seulement huit données : la référence, le type de sinistre, la date de survenance, le montant déclaré, la date de souscription, le nombre de sinistres sur 12 mois, le code postal et le montant justifié (résultat de l'Estimation). Ce sont exactement celles qu'exigent les indicateurs F1 à F4 et les sept champs du contrat.
+
+L'identité de l'assuré, son IBAN, la description et les pièces ne parviennent donc jamais à l'agent : [E3] est tenu deux fois, à l'entrée de l'agent (la Coordination ne les lui passe pas) et à la sortie du filtre (sept champs exactement).
+
+- [x] Qui déclenche l'agent Anti-fraude ?
+  **Réponse.** La Coordination, par un appel direct, une fois l'Estimation terminée (l'indicateur F4 a besoin du montant justifié). L'agent ne surveille jamais la mémoire pour y trouver du travail.
 
 ### Les sept champs, et d'où ils viennent
 
@@ -216,7 +223,9 @@ Les demandes sans indicateur ne sont pas concernées : elles n'appellent jamais 
 - [x] Comment l'implémente-t-on sans bloquer le reste ?
   **Réponse.** Trois mécanismes. L'appel est abandonné au plus tard à 3 s, et jamais après la fin des 10 s de la demande : son délai est le plus petit de 3 s et du temps restant, moins la réserve gardée pour produire la fiche. Les demandes d'un lot sont traitées en concurrence (chantier 1, section 4) : une demande qui attend le partenaire ne retarde pas les autres. Enfin, une demande sans indicateur n'appelle jamais le partenaire.
 - [x] Qui applique la règle ?
-  **Réponse.** L'agent Anti-fraude écrit « indisponible » et la raison dans `avis_fraude` ; la Coordination applique la règle 4 du § 10, donc le § 9. La frontière du chantier 1 reste intacte : l'agent Anti-fraude ne conclut jamais la demande.
+  **Réponse.** L'agent Anti-fraude renvoie « indisponible » et la raison à la Coordination. Celle-ci range ce résultat dans `avis_fraude` (la ligne de trace de l'étape reste au nom de l'agent : `agent: antifraude`, `ecrit: [avis_fraude]`, comme l'exige `interface.md`), puis applique la règle 4 du § 10, donc le § 9. La frontière du chantier 1 reste intacte : l'agent Anti-fraude ne conclut jamais la demande.
+- [x] Pourquoi ne pas confier à un humain toute demande dont l'avis manque ?
+  **Réponse.** Le § 9 fixe la règle, et elle le prévoit déjà au-delà de 1 500 € : escalade vers `cellule_fraude`, donc un contrôle humain avant toute décision. À 1 500 € ou moins, le métier accepte de continuer sans avis, avec la mention « mode dégradé » pour un contrôle a posteriori. Tout confier à un humain contredirait ce choix du métier et chargerait une file dont la capacité reste un point ouvert (chantier 1, section 1).
 - [x] Y a-t-il un disjoncteur pour cesser d'appeler un partenaire en panne ?
   **Réponse : non, par choix.** Chaque dossier n'a droit qu'à un appel, et une panne coûte au plus 3 s à la demande concernée, sans toucher les autres. Ne pas appeler priverait une demande d'un avis que le partenaire, revenu, aurait pu rendre. Si l'épreuve montrait le contraire, la décision serait consignée au journal des ajustements (section 9).
 - [x] Que devient une réponse qui arrive après l'abandon ?
@@ -312,7 +321,7 @@ Chaque cas est un scénario de `eval/scenarios.jsonl` ; les cas d'usage de l'éq
 
 Situation : formule confort, contrat de 71 jours (indicateur F2), dégât des eaux de 1 200 €, pièces complètes.
 
-Déroulé : éligibilité et pièces conformes ; estimé 1 050 € ; l'agent Anti-fraude construit le message de sept champs (section 3) et envoie un seul `message/send` ; la réponse passe les cinq niveaux de validation ; l'avis `faible` est écrit dans `avis_fraude` ; règle 4 : la demande poursuit ; règle 6 : acceptée.
+Déroulé : éligibilité et pièces conformes ; estimé 1 050 € ; l'agent Anti-fraude construit le message de sept champs (section 3) et envoie un seul `message/send` ; la réponse passe les cinq niveaux de validation ; l'agent renvoie l'avis `faible`, que la Coordination range dans `avis_fraude` ; règle 4 : la demande poursuit ; règle 6 : acceptée.
 
 Issue : décision acceptée, 1 050 €, `avis_fraude` de niveau faible. Ce que le cas montre : le chemin nominal de la liaison, sans aucune donnée personnelle envoyée.
 
@@ -371,7 +380,7 @@ Une question métier (Q0), puis cinq questions de conception posées dans l'ordr
 
 ### 5. L'échange A2A, le filtre, la validation et le chemin de mode dégradé
 
-Un seul point de sortie vers le partenaire ; sept champs exactement ; un appel unique abandonné à 3 s ; une validation à cinq niveaux ; sans avis exploitable, la règle du § 9. Fichiers : [schema-5-echange-a2a.drawio](schemas/schema-5-echange-a2a.drawio), [PNG](schemas/schema-5-echange-a2a.png).
+Un seul point de sortie vers le partenaire ; la Coordination, seule à lire l'état, passe huit données à l'agent Anti-fraude et range son résultat ; sept champs exactement ; un appel unique abandonné à 3 s ; une validation à cinq niveaux ; sans avis exploitable, la règle du § 9. Fichiers : [schema-5-echange-a2a.drawio](schemas/schema-5-echange-a2a.drawio), [PNG](schemas/schema-5-echange-a2a.png).
 
 ![Échange A2A et mode dégradé](schemas/schema-5-echange-a2a.png)
 
