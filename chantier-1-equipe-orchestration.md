@@ -82,7 +82,7 @@ Questions associées :
 ### Rôles et frontières
 
 - [x] Quels sont exactement les agents ?
-  **Réponse.** Cinq, un par section métier de `interface.md` : **Éligibilité** (`eligibilite`), **Pièces justificatives** (`pieces`), **Estimation** (`estimation`), **Anti-fraude**, liaison avec le partenaire (`avis_fraude`), et la **Coordination** (`issue`). « Une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section métier. »
+  **Réponse.** Cinq, un par section métier de `interface.md` : **Éligibilité** (`eligibilite`), **Pièces justificatives** (`pieces`), **Estimation** (`estimation`), **Anti-fraude**, liaison avec le partenaire (`avis_fraude`), et la **Coordination** (`issue`). « Une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section métier. » Chaque section est remplie par le résultat d'un seul agent ; c'est la Coordination, seule à lire et à écrire l'état, qui l'y range (section 5).
   Le brief cite quatre agents (éligibilité, pièces, estimation, coordination). `interface.md` en impose un cinquième : il y a cinq sections métier, un agent par section, et la Coordination écrit déjà `issue`. La section `avis_fraude` revient donc à un agent de liaison avec le partenaire. Cet agent n'émet aucun avis : il calcule les indicateurs, appelle le partenaire et contrôle sa réponse.
 - [x] Sous quel nom chaque agent apparaît-il dans la trace ?
   **Réponse.** Un nom fixe par agent, utilisé dans le champ `agent` de la trace et comme clé des métriques de `traiter_lot` (`interface.md`) : `coordination`, `eligibilite`, `pieces`, `estimation`, `antifraude`. Changer un nom casserait la lecture des métriques.
@@ -93,7 +93,7 @@ Questions associées :
 - [x] Qui rend la décision finale, et qui rédige le motif ?
   **Réponse.** La Coordination, qui écrit la section `issue` en appliquant les règles du § 10 dans l'ordre, et rédige le motif destiné à l'assuré ou au gestionnaire (§ 11).
 - [x] Comment prouver par un test qu'un agent ne sort pas de son rôle ?
-  **Réponse.** Deux preuves. La trace : pour chaque étape, `ecrit` liste les sections écrites ; un test vérifie que chaque agent n'écrit que sa section, sur les 28 scénarios. Et un test unitaire : un agent qui tente d'écrire la section d'un autre reçoit une erreur de droits.
+  **Réponse.** Deux preuves. La trace : pour chaque étape, `agent` nomme l'agent dont le résultat a été rangé et `ecrit` la section remplie ; un test vérifie, sur les 28 scénarios, que chaque section n'est remplie que par son agent. Et deux tests unitaires : la Coordination refuse de ranger le résultat d'un agent dans une autre section (erreur de droits), et aucun agent ne reçoit l'état complet.
 
 ### Le contrat de chaque agent
 
@@ -112,11 +112,25 @@ def verifier_eligibilite(demande: Demande) -> ResultatEligibilite:
 
 | Agent | Entrée | Sortie | Erreurs possibles | Docstring (une phrase) |
 |---|---|---|---|---|
-| Éligibilité | contrat et sinistre de la demande | éligible oui ou non ; conditions non remplies | données incomplètes | Dit si le contrat couvre le sinistre, sans chiffrer |
-| Pièces justificatives | pièces, type de sinistre, dépôts de l'espace assuré | complet, ou pièces manquantes ou illisibles ; factures lisibles ; compléments demandés | données incomplètes | Dit si les pièces exigées sont présentes, lisibles et du type attendu, et demande les compléments quand la Coordination le lui confie, sans conclure la demande |
-| Estimation | montant déclaré, formule, factures lisibles | montant justifié, montant retenu, montant estimé | données incomplètes | Calcule le montant remboursable, franchise et plafond compris, sans juger la fraude |
-| Anti-fraude | champs utiles de la demande, montant justifié | non requis ; ou avis (niveau, score, indicateurs, `evaluation_id`) ; ou indisponible avec la raison | délai dépassé, erreur du service, réponse non conforme : toutes rendent « indisponible », jamais une exception | Calcule les indicateurs F1 à F4 et, si l'un est présent, obtient l'avis du partenaire en un seul appel, sans jamais émettre d'avis lui-même |
-| Coordination | toutes les sections | section `issue` ; fiche de décision | borne atteinte, agent en échec : toutes deux mènent à une escalade motivée | Délègue chaque contrôle, applique les règles de décision dans l'ordre et conclut, sans refaire aucun contrôle |
+| Éligibilité | contrat et sinistre, passés par la Coordination | éligible oui ou non ; conditions non remplies | données incomplètes | Dit si le contrat couvre le sinistre, sans chiffrer |
+| Pièces justificatives | pièces, type de sinistre, dépôts de l'espace assuré, passés par la Coordination | complet, ou pièces manquantes ou illisibles ; factures lisibles ; compléments demandés | données incomplètes | Dit si les pièces exigées sont présentes, lisibles et du type attendu, et demande les compléments quand la Coordination le lui confie, sans conclure la demande |
+| Estimation | montant déclaré, formule, factures lisibles, passés par la Coordination | montant justifié, montant retenu, montant estimé | données incomplètes | Calcule le montant remboursable, franchise et plafond compris, sans juger la fraude |
+| Anti-fraude | huit données passées par la Coordination, dont le montant justifié | non requis ; ou avis (niveau, score, indicateurs, `evaluation_id`) ; ou indisponible avec la raison | délai dépassé, erreur du service, réponse non conforme : toutes rendent « indisponible », jamais une exception | Calcule les indicateurs F1 à F4 et, si l'un est présent, obtient l'avis du partenaire en un seul appel, sans jamais émettre d'avis lui-même |
+| Coordination | l'état de la demande, qu'elle est seule à lire | section `issue`, rangement des résultats ; fiche de décision | borne atteinte, agent en échec : toutes deux mènent à une escalade motivée | Délègue chaque contrôle, applique les règles de décision dans l'ordre et conclut, sans refaire aucun contrôle |
+
+### Les entrées passées par la Coordination
+
+La Coordination est la seule à lire l'état de la demande. Elle déclenche chaque agent par un appel direct et lui passe seulement les données dont il a besoin ; l'agent renvoie son résultat, que la Coordination range dans la section de cet agent (section 5).
+
+| Agent | Données passées par la Coordination | Ce que l'agent ne reçoit jamais |
+|---|---|---|
+| Éligibilité | statut du contrat, cotisations, formule, date de souscription ; type de sinistre, date de survenance, date de déclaration | identité, IBAN, description, pièces |
+| Pièces justificatives | type de sinistre, pièces, dépôts de l'espace assuré | identité, IBAN, description, montants estimés |
+| Estimation | montant déclaré, formule, factures lisibles (résultat de Pièces) | identité, IBAN, description |
+| Anti-fraude | référence, type de sinistre, date de survenance, montant déclaré, date de souscription, sinistres sur 12 mois, code postal, montant justifié (résultat de l'Estimation) | identité, IBAN, description, pièces |
+
+- [x] Le type de sinistre est-il saisi en texte libre ?
+  **Réponse.** Non (§ 3) : `sinistre.type` est un champ structuré à quatre valeurs, et la description libre n'entre dans aucune règle. Si le type devait un jour être déduit du texte libre, ce serait un jugement : une étape de qualification en amont, candidate à un LLM avec un contrôle contre les quatre valeurs, et non une règle de l'Éligibilité.
 
 ### Garde-fous et métriques de bon fonctionnement, par agent
 
@@ -126,7 +140,7 @@ def verifier_eligibilite(demande: Demande) -> ResultatEligibilite:
 | Pièces justificatives | demandes de complément bornées (2 au plus) ; une demande de complément n'est faite que sur délégation de la Coordination, après le résultat de l'Éligibilité | part des demandes avec complément ; échecs |
 | Estimation | le montant n'est jamais négatif, jamais supérieur au plafond de la formule, arrondi au centime (NOM-05 le vérifie) | échecs ; latence |
 | Anti-fraude | filtre sortant en liste blanche ; un seul appel par dossier (marqueur écrit par la Coordination avant la délégation) ; abandon à 3 s ; réponse contrôlée avant usage (chantier 2) | appels externes, réponses écartées, part des demandes en mode dégradé |
-| Coordination | bornes vérifiées avant chaque délégation ; seule à écrire `issue` | étapes consommées par demande, bornes atteintes (`arret`), part d'escalades |
+| Coordination | bornes vérifiées avant chaque délégation ; seule à lire et à écrire l'état ; range chaque résultat dans la seule section de son agent | étapes consommées par demande, bornes atteintes (`arret`), part d'escalades |
 
 ### Le point ambigu
 
@@ -161,11 +175,11 @@ Dans ce dossier, un agent est une unité de responsabilité : un rôle, un contr
 
 | Agent | Contrôles | Nature | Où un LLM aurait du sens, en production | Place dans l'architecture et la mémoire |
 |---|---|---|---|---|
-| Éligibilité | E1 contrat actif, E2 cotisations à jour, E3 carence de 30 jours, E4 déclaration sous 30 jours (5 pour un vol), E5 garantie de la formule | règles simples : un statut, une date, une liste | aucun | écrit `eligibilite`, lue par la Coordination (règle 1) ; tourne en parallèle de Pièces |
-| Pièces justificatives | présence, lisibilité, type attendu ; demande de complément | présence et type : règles. Lisibilité : fournie par un champ dans les scénarios (`lisible`, § 3) | lire une facture scannée, vérifier qu'une photo montre bien le sinistre déclaré : le cas le plus solide pour un LLM | écrit `pieces`, seule section réécrite après chaque dépôt ; fournit les factures lisibles à l'Estimation |
-| Estimation | montant justifié, retenu, estimé ; franchise ; plafond | calcul | aucun : un montant calculé par un LLM serait un risque | écrit `estimation` ; fournit le montant justifié à l'Anti-fraude (F4) |
-| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | F1 à F4 : des seuils. L'avis : un jugement, rendu par le partenaire | le jugement existe déjà, chez le partenaire | écrit `avis_fraude` ; seul agent qui sort du système ; ne voit ni l'identité ni l'IBAN |
-| Coordination | bornes, règles du § 10 dans l'ordre, issue, motif | règles ordonnées | rédiger le motif lisible (§ 11), hors décision | écrit `issue` et `controle` ; seule à conclure |
+| Éligibilité | E1 contrat actif, E2 cotisations à jour, E3 carence de 30 jours, E4 déclaration sous 30 jours (5 pour un vol), E5 garantie de la formule | règles simples : un statut, une date, une liste | aucun | son résultat remplit `eligibilite` (règle 1) ; tourne en parallèle de Pièces |
+| Pièces justificatives | présence, lisibilité, type attendu ; demande de complément | présence et type : règles. Lisibilité : fournie par un champ dans les scénarios (`lisible`, § 3) | lire une facture scannée, vérifier qu'une photo montre bien le sinistre déclaré : le cas le plus solide pour un LLM | son résultat remplit `pieces`, seule section remplie à nouveau après chaque dépôt ; ses factures lisibles sont passées à l'Estimation |
+| Estimation | montant justifié, retenu, estimé ; franchise ; plafond | calcul | aucun : un montant calculé par un LLM serait un risque | son résultat remplit `estimation` ; son montant justifié est passé à l'Anti-fraude (F4) |
+| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | F1 à F4 : des seuils. L'avis : un jugement, rendu par le partenaire | le jugement existe déjà, chez le partenaire | son résultat remplit `avis_fraude` ; seul agent qui sort du système ; ne reçoit ni l'identité ni l'IBAN |
+| Coordination | bornes, règles du § 10 dans l'ordre, issue, motif | règles ordonnées | rédiger le motif lisible (§ 11), hors décision | seule à lire et à écrire l'état : range chaque résultat, écrit `issue` et `controle` ; seule à conclure |
 
 **Pourquoi garder des agents alors que les contrôles sont des règles ?**
 
@@ -173,8 +187,9 @@ Dans ce dossier, un agent est une unité de responsabilité : un rôle, un contr
 2. La frontière se prouve : une section, un propriétaire, vérifié dans la trace sur les 28 scénarios [E2].
 3. Le contrat ne change pas si la réalisation change. L'agent Pièces peut passer au LLM sans toucher la Coordination ni la mémoire. Trois choses changent alors : un budget de tokens (aujourd'hui « sans objet », section 4), une validation de sa sortie, et la règle « pas de relance », qui suppose un code déterministe.
 4. Les métriques se lisent par agent (appels, échecs, latence), sous un nom fixe (`interface.md`).
+5. Agent ou outil, l'architecture est la même : la Coordination appelle et reçoit un résultat. Le mot « agent » désigne ici une responsabilité métier séparée, avec son contrat, son nom dans la trace et ses métriques ; il ne suppose pas de LLM, donc pas la latence d'un appel de modèle.
 
-**Comment les agents communiquent.** Ici, les agents internes sont des fonctions appelées par la Coordination, dans le même processus : une seule équipe les maintient, et c'est le plus sûr pour tenir 10 s. Si un contrôle appartenait à un autre service de l'entreprise, il serait exposé par une API ou une interface d'agent, comme le partenaire en A2A. Ce choix dépend de l'organisation, pas des règles de décision.
+**Comment les agents communiquent.** Aucun agent ne lit la mémoire : la Coordination lui passe ses entrées et range son résultat. Ici, les agents internes sont des fonctions appelées par la Coordination, dans le même processus : une seule équipe les maintient, et c'est le plus sûr pour tenir 10 s. Si un contrôle appartenait à un autre service de l'entreprise, il serait exposé par une API ou une interface d'agent, comme le partenaire en A2A. Ce choix dépend de l'organisation, pas des règles de décision.
 
 Le schéma A montre cette architecture générale sur une seule vue.
 
@@ -182,16 +197,18 @@ Le schéma A montre cette architecture générale sur une seule vue.
 
 | Agent | Rôle | Reçoit | Renvoie | Ne fait jamais | Code ou LLM |
 |---|---|---|---|---|---|
-| Coordination | délègue, vérifie les bornes, applique les règles du § 10, conclut | toutes les sections | `issue`, fiche de décision | refaire un contrôle | code |
-| Éligibilité | conditions E1 à E5 de la spec | contrat, sinistre | éligible, conditions non remplies | chiffrer, appliquer le plafond, juger les pièces ou la fraude | code |
-| Pièces justificatives | présence, lisibilité, type attendu des pièces ; demandes de complément confiées par la Coordination | pièces, dépôts de l'espace assuré | complet ou manquantes, factures lisibles | conclure ou escalader, chiffrer, juger la fraude, décider seul d'une demande de complément | code |
-| Estimation | montant justifié, retenu, estimé ; franchise et plafond | montant déclaré, formule, factures lisibles | montants | juger la fraude, revenir sur l'éligibilité | code |
-| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | champs utiles de la demande, montant justifié | non requis, avis ou indisponible | émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel | code |
+| Coordination | délègue, vérifie les bornes, range les résultats, applique les règles du § 10, conclut | l'état complet, qu'elle est seule à lire | `issue`, fiche de décision | refaire un contrôle | code |
+| Éligibilité | conditions E1 à E5 de la spec | contrat, sinistre (passés par la Coordination) | éligible, conditions non remplies | chiffrer, appliquer le plafond, juger les pièces ou la fraude | code |
+| Pièces justificatives | présence, lisibilité, type attendu des pièces ; demandes de complément confiées par la Coordination | pièces, dépôts de l'espace assuré (passés par la Coordination) | complet ou manquantes, factures lisibles | conclure ou escalader, chiffrer, juger la fraude, décider seul d'une demande de complément | code |
+| Estimation | montant justifié, retenu, estimé ; franchise et plafond | montant déclaré, formule, factures lisibles (passés par la Coordination) | montants | juger la fraude, revenir sur l'éligibilité | code |
+| Anti-fraude | indicateurs F1 à F4 ; un appel au partenaire ; contrôle de la réponse | huit données passées par la Coordination | non requis, avis ou indisponible | émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel | code |
 
 ## 4. L'orchestration et la terminaison garantie [E1] [E6]
 
 - [x] Quel schéma d'orchestration : superviseur qui délègue, chaîne séquentielle, mixte ?
   **Réponse : mixte.** Un superviseur, la Coordination, délègue chaque contrôle ; les deux premiers tournent en parallèle, la suite s'enchaîne dans l'ordre de la spec. Les agents ne s'appellent jamais entre eux.
+- [x] Qui déclenche chaque agent, l'Éligibilité par exemple ?
+  **Réponse.** La Coordination, par un appel direct, avec les données dont l'agent a besoin. Aucun agent ne surveille la mémoire pour y trouver du travail : il attend d'être appelé, renvoie son résultat, et la Coordination le range avant de décider de l'appel suivant.
 - [x] Qui décide qu'une demande est terminée ?
   **Réponse.** La Coordination seule, en écrivant la section `issue` (« seule la décision conclut la demande », § 2). Elle applique les règles du § 10 dans l'ordre ; la première qui s'applique fixe l'issue.
 - [x] Quels sont les états finaux possibles ?
@@ -199,7 +216,7 @@ Le schéma A montre cette architecture générale sur une seule vue.
 - [x] Comment borne-t-on les boucles ?
   **Réponse.** Une seule boucle existe dans le parcours : la demande de complément de pièces, qui reprend le contrôle après chaque dépôt de l'assuré (§ 5). Elle est bornée par le nombre de compléments, par la détection d'un état déjà vu et par les bornes globales (étapes et durée).
 - [x] Qu'est-ce qu'une étape ?
-  **Réponse.** Une délégation de la Coordination à un agent, soit une ligne de trace. Une demande de complément, avec la lecture du dépôt de l'assuré et le nouveau contrôle des pièces, compte pour une étape. L'écriture de l'issue par la Coordination est la dernière étape.
+  **Réponse.** Une délégation de la Coordination à un agent : l'appel avec ses entrées, le résultat renvoyé et son rangement dans la section de l'agent, soit une ligne de trace. Une demande de complément, avec la lecture du dépôt de l'assuré et le nouveau contrôle des pièces, compte pour une étape. L'écriture de l'issue par la Coordination est la dernière étape.
 - [x] Quelles bornes au départ, et sur quelle base les choisit-on ?
   **Réponse :** voir le tableau ci-dessous. La durée vient de l'engagement de service ; le nombre d'étapes vient du chemin le plus long prévu par la spec et les scénarios ; le délai du partenaire vient de son contrat.
 - [x] Que se passe-t-il quand une borne est atteinte ?
@@ -242,30 +259,32 @@ Le brief demande une mémoire partagée de la demande, avec un état commun et u
 - [x] Sous quelle forme, et où vit-elle ?
   **Réponse.** En mémoire, un objet par demande, créé au début de `traiter_demande` et jamais partagé entre deux demandes : le traitement d'une demande n'en retarde pas une autre (§ 12). À la fin, la fiche de décision est construite depuis `issue`, `avis_fraude`, la trace et `arret`.
 - [x] Accès maîtrisé : qui lit et qui écrit quels champs ?
-  **Réponse :** voir le tableau ci-dessous. Chaque agent écrit sa seule section ; il lit seulement ce dont il a besoin.
+  **Réponse.** La Coordination est la seule à lire et à écrire l'état de la demande. Elle appelle chaque agent directement, en lui passant seulement les données dont il a besoin (section 3) ; l'agent ne voit pas l'état, il renvoie son résultat ; la Coordination range ce résultat dans la section de cet agent, puis décide de l'appel suivant. Voir le tableau ci-dessous.
 - [x] Comment un agent évite-t-il d'écraser le travail d'un autre ?
-  **Réponse.** Une table fixe donne le propriétaire de chaque section ; toute écriture d'un agent dans une autre section est refusée par une erreur de droits. Seul le propriétaire écrit sa section, et il peut la réécrire à une étape suivante : `pieces` est mise à jour par Pièces après chaque dépôt de l'assuré ; les autres sections métier ne sont écrites qu'une fois. Éligibilité et Pièces, qui tournent en parallèle, écrivent dans des sections différentes : aucun conflit possible. La trace enregistre l'agent et les sections écrites à chaque étape, ce qui rend la règle vérifiable par un test.
+  **Réponse.** Un agent ne peut rien écraser : il n'a aucun accès à l'état. Une table fixe associe chaque agent à sa section ; la Coordination range le résultat d'un agent dans cette seule section et refuse tout autre rangement (erreur de droits). `pieces` est remplie à nouveau après chaque dépôt de l'assuré ; les autres sections métier ne le sont qu'une fois. Éligibilité et Pièces tournent en parallèle, mais un seul composant écrit : aucun conflit possible. Chaque section métier reste alimentée par un seul agent, comme l'exige `interface.md` : la ligne de trace de l'étape porte le nom de l'agent (`agent`) et la section remplie par son résultat (`ecrit`).
 - [x] Peut-on reprendre une demande après un crash, sans la bloquer de nouveau ?
   **Réponse.** Une demande se traite en 10 s au plus : en cas de crash, elle est reprise depuis le début, les contrôles en code donnant le même résultat. **Une exception, imposée par le contrat du partenaire** : un seul appel par dossier, et un doublon est signalé comme manquement. La Coordination écrit donc le marqueur « appel au partenaire délégué » dans `controle` juste avant de déléguer l'appel ; à la reprise, un marqueur sans avis rend l'avis « indisponible » (mode dégradé), et le partenaire n'est jamais rappelé.
 - [x] Quels champs de la mémoire ne doivent jamais partir chez le partenaire ? [E3]
-  **Réponse (contrat, § 2).** L'identité et les coordonnées de l'assuré (nom, prénom, e-mail, téléphone, adresse, code postal complet), l'IBAN, l'identifiant client et le numéro de contrat, la description libre du sinistre, les pièces et leur contenu. Seuls sept champs partent, construits par l'agent Anti-fraude (chantier 2).
+  **Réponse (contrat, § 2).** L'identité et les coordonnées de l'assuré (nom, prénom, e-mail, téléphone, adresse, code postal complet), l'IBAN, l'identifiant client et le numéro de contrat, la description libre du sinistre, les pièces et leur contenu. Seuls sept champs partent, construits par l'agent Anti-fraude (chantier 2), qui ne reçoit lui-même que huit données de la Coordination.
 - [x] Où range-t-on l'identifiant de l'évaluation du partenaire ?
   **Réponse.** Dans la section `avis_fraude` : niveau, score, indicateurs, `evaluation_id` (à conserver pour audit, contrat § 3) et version du modèle. Le contrat ne prévoit qu'un appel `message/send` qui renvoie une tâche terminée : pas d'identifiant de tâche à suivre ni à annuler.
 
 ### Les droits sur la mémoire
 
-| Section de l'état | Écrite par | Lue par |
-|---|---|---|
-| `demande` (données reçues) | à la création, puis lecture seule | Éligibilité (contrat, sinistre) ; Pièces (pièces, sinistre, espace assuré) ; Estimation (montant déclaré, formule) ; Anti-fraude (sinistre, dates, historique, code postal pour le département) ; Coordination |
-| `eligibilite` | Éligibilité | Coordination |
-| `pieces` | Pièces | Estimation (factures lisibles), Coordination |
-| `estimation` | Estimation | Anti-fraude (montant justifié), Coordination |
-| `avis_fraude` | Anti-fraude | Coordination |
-| `issue` | Coordination | fiche de décision |
-| `controle` : compteurs des bornes, marqueur d'appel au partenaire, `arret` | Coordination | Coordination |
-| `trace` : une ligne par étape, ajout seul | chaque étape, au nom de l'agent qui la réalise | métriques, fiche de décision |
+Seule la Coordination lit et écrit l'état. Le tableau dit, pour chaque section, quel agent fournit le résultat et à qui la Coordination en passe ensuite le contenu.
 
-L'agent Anti-fraude ne lit ni l'identité de l'assuré, ni son IBAN, ni le contenu des pièces : il ne peut pas envoyer ce qu'il ne voit pas.
+| Section de l'état | Remplie par le résultat de | Rangée par | Contenu passé ensuite à |
+|---|---|---|---|
+| `demande` (données reçues) | à la création, puis lecture seule | Coordination | chaque agent reçoit seulement ses entrées (section 3) |
+| `eligibilite` | Éligibilité | Coordination | la Coordination (règle 1) |
+| `pieces` | Pièces (après chaque dépôt) | Coordination | l'Estimation (factures lisibles), la Coordination (règle 2) |
+| `estimation` | Estimation | Coordination | l'Anti-fraude (montant justifié), la Coordination (règles 3 et 5) |
+| `avis_fraude` | Anti-fraude | Coordination | la Coordination (règle 4) |
+| `issue` | Coordination | Coordination | la fiche de décision |
+| `controle` : compteurs des bornes, marqueur d'appel au partenaire, `arret` | Coordination | Coordination | la Coordination |
+| `trace` : une ligne par étape, ajout seul | chaque étape, au nom de l'agent dont le résultat est rangé | Coordination | métriques, fiche de décision |
+
+L'agent Anti-fraude ne reçoit ni l'identité de l'assuré, ni son IBAN, ni la description, ni les pièces : il ne peut pas envoyer ce qu'il ne reçoit pas. [E3] est ainsi tenu deux fois, à l'entrée de l'agent et à la sortie du filtre (chantier 2).
 
 ## 6. L'observabilité et le plan de preuve [E6]
 
@@ -278,11 +297,11 @@ Le partenaire peut être lent, en panne ou répondre de manière non conforme : 
 - [x] Quels éléments observe-t-on au niveau de l'équipe et de son orchestration ?
   **Réponse.** Les étapes consommées par demande, les bornes atteintes (`arret`), la part d'escalades par file, la part des demandes traitées en mode dégradé.
 - [x] Comment montrer qu'une demande a suivi le bon chemin ?
-  **Réponse.** Par sa trace : la suite des agents et des sections écrites se compare au chemin attendu par les règles du § 10.
+  **Réponse.** Par sa trace : la suite des agents et des sections remplies se compare au chemin attendu par les règles du § 10.
 - [x] Comment prouver [E1] sur tous les scénarios ?
   **Réponse.** Un test rejoue les 28 scénarios de `eval/scenarios.jsonl` et vérifie que chaque fiche porte une issue (`decision` ou `escalade`), conforme au champ `attendu`, en 10 s au plus.
 - [x] Comment prouver [E2] ?
-  **Réponse.** Sur les mêmes rejeux, un test vérifie dans la trace que chaque section métier n'est écrite que par son agent propriétaire ; un test unitaire fait écrire un agent dans une autre section et attend une erreur de droits.
+  **Réponse.** Sur les mêmes rejeux, un test vérifie dans la trace que chaque section métier n'est remplie que par le résultat de son agent. Deux tests unitaires : la Coordination refuse de ranger le résultat d'un agent dans une autre section (erreur de droits), et aucun agent ne reçoit l'état complet.
 
 Le filtre des données sortantes, la validation des réponses du partenaire et le mode dégradé sont traités au [chantier 2](chantier-2-a2a-epreuve.md).
 
@@ -294,22 +313,22 @@ Chaque cas est un scénario de `eval/scenarios.jsonl`. Une étape est une délé
 
 Situation : formule premium, dégât des eaux du 2 août 2026 déclaré le lendemain, 2 300 € déclarés ; facture lisible, photo absente ; l'assuré dépose une photo lisible après la demande de complément.
 
-| Étape | Agent | Écrit | Résultat |
+| Étape | Agent | Section remplie | Résultat |
 |---|---|---|---|
 | 1 | eligibilite | eligibilite | éligible : les cinq conditions sont remplies |
 | 2 | pieces | pieces | photo manquante |
-| 3 | pieces, sur délégation de la Coordination | pieces (réécrite) | complément adressé, photo déposée, pièces complètes |
+| 3 | pieces, sur délégation de la Coordination | pieces (remplie à nouveau) | complément adressé, photo déposée, pièces complètes |
 | 4 | estimation | estimation | justifié 2 300 €, franchise 0 €, estimé 2 300 € |
 | 5 | antifraude | avis_fraude | aucun indicateur F1 à F4 : avis non requis, aucun appel |
 | 6 | coordination | issue | règles 1 à 5 non applicables, règle 6 : acceptée |
 
-Issue : décision acceptée, 2 300 € remboursés, sans avis ni mode dégradé. Ce que le cas montre : la boucle de complément, la réécriture de `pieces` par son seul propriétaire, la décision du complément par la Coordination après l'éligibilité.
+Issue : décision acceptée, 2 300 € remboursés, sans avis ni mode dégradé. Ce que le cas montre : la boucle de complément, `pieces` remplie à nouveau par le seul résultat de Pièces, la décision du complément par la Coordination après l'éligibilité.
 
 ### Cas 2 : un contrat résilié (NOM-02, KAL-26-0102)
 
 Situation : formule essentiel, contrat au statut `resilie`, incendie de 2 400 € avec facture et photo.
 
-| Étape | Agent | Écrit | Résultat |
+| Étape | Agent | Section remplie | Résultat |
 |---|---|---|---|
 | 1 | eligibilite | eligibilite | non éligible : condition E1 (contrat actif) non remplie |
 | 2 | pieces | pieces | pièces complètes (contrôle mené en parallèle) |
@@ -321,7 +340,7 @@ Issue : décision refusée, 0 €, le motif cite la condition E1. Ce que le cas 
 
 Situation : formule essentiel (franchise 300 €, plafond 3 000 €), dégât des eaux de 4 200 € avec facture et photo.
 
-| Étape | Agent | Écrit | Résultat |
+| Étape | Agent | Section remplie | Résultat |
 |---|---|---|---|
 | 1 | eligibilite | eligibilite | éligible |
 | 2 | pieces | pieces | pièces complètes |
@@ -335,11 +354,11 @@ Issue : décision acceptée, 3 000 € remboursés. Ce que le cas montre : le pl
 
 Situation : formule confort, dégât des eaux de 1 400 € ; la facture est illisible, et le seul dépôt de l'assuré est une facture tout aussi illisible.
 
-| Étape | Agent | Écrit | Résultat |
+| Étape | Agent | Section remplie | Résultat |
 |---|---|---|---|
 | 1 | eligibilite | eligibilite | éligible |
 | 2 | pieces | pieces | facture illisible |
-| 3 | pieces, sur délégation de la Coordination | pieces (réécrite) | complément adressé, nouveau dépôt illisible : même état qu'à l'étape 2 |
+| 3 | pieces, sur délégation de la Coordination | pieces (remplie à nouveau) | complément adressé, nouveau dépôt illisible : même état qu'à l'étape 2 |
 | 4 | coordination | issue | borne « même état vu deux fois » : escalade gestionnaire |
 
 Issue : escalade, `arret` renseigné avec le nom de la borne, trace de 4 étapes. Ce que le cas montre : la boucle arrêtée par une borne, jamais un blocage silencieux.
@@ -362,7 +381,7 @@ Fondés sur `specs_metier.md` (version 3.2) et `interface.md`. Restent provisoir
 
 ### A. L'architecture générale
 
-Une seule vue : l'entrée `traiter_lot`, la Coordination, les quatre agents de contrôle et la section que chacun écrit, la mémoire partagée de la demande, l'espace assuré, le partenaire, les métriques et les deux issues possibles. Les deux encadrés de gauche résument pourquoi les contrôles restent des agents et comment ils communiquent (section 3). Fichiers : [schema-A-architecture-generale.drawio](schemas/schema-A-architecture-generale.drawio), [PNG](schemas/schema-A-architecture-generale.png).
+Une seule vue : l'entrée `traiter_lot`, la Coordination (seule à lire et à écrire la mémoire, elle appelle chaque agent et reçoit son résultat), les quatre agents de contrôle et la section que remplit le résultat de chacun, la mémoire partagée de la demande, le mode dégradé, l'espace assuré, le partenaire, les métriques et les deux issues possibles. Les deux encadrés de gauche résument pourquoi les contrôles restent des agents et comment ils communiquent (section 3). Fichiers : [schema-A-architecture-generale.drawio](schemas/schema-A-architecture-generale.drawio), [PNG](schemas/schema-A-architecture-generale.png).
 
 ![Architecture générale](schemas/schema-A-architecture-generale.png)
 
@@ -374,7 +393,7 @@ Une question métier (Q0), puis cinq questions d'architecture posées dans l'ord
 
 ### 1. La carte des agents
 
-Les cinq agents, la section que chacun écrit, ses interdits, le point ambigu tranché (le plafond) et les dépendances. Fichiers : [schema-1-carte-des-agents.drawio](schemas/schema-1-carte-des-agents.drawio), [PNG](schemas/schema-1-carte-des-agents.png).
+Les cinq agents, la section que remplit le résultat de chacun, ses interdits, le point ambigu tranché (le plafond) et les dépendances. Fichiers : [schema-1-carte-des-agents.drawio](schemas/schema-1-carte-des-agents.drawio), [PNG](schemas/schema-1-carte-des-agents.png).
 
 ![Carte des agents](schemas/schema-1-carte-des-agents.png)
 
@@ -386,6 +405,6 @@ Les règles de décision du § 10 dans l'ordre, la boucle de la demande de compl
 
 ### 3. La mémoire partagée de la demande
 
-Les sections, l'agent propriétaire de chacune, les droits de lecture, la règle d'écriture et le lieu de vie de l'état. Fichiers : [schema-3-memoire-partagee.drawio](schemas/schema-3-memoire-partagee.drawio), [PNG](schemas/schema-3-memoire-partagee.png).
+Les sections, l'agent dont le résultat remplit chacune, la Coordination seule à lire et à écrire l'état, la règle de rangement et le lieu de vie de l'état. Fichiers : [schema-3-memoire-partagee.drawio](schemas/schema-3-memoire-partagee.drawio), [PNG](schemas/schema-3-memoire-partagee.png).
 
 ![Mémoire partagée de la demande](schemas/schema-3-memoire-partagee.png)
