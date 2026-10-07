@@ -14,8 +14,8 @@ Les questions de réflexion ont été discutées en groupe pendant la séance du
 |---|---|
 | [chantier-1-equipe-orchestration.md](chantier-1-equipe-orchestration.md) | Chantier 1 : cadrage métier (existant, besoin, résultats attendus), choix du pattern par arbre de décision, carte des agents avec contrats et garde-fous, orchestration, mémoire partagée, observabilité et plan de preuve |
 | [chantier-2-a2a-epreuve.md](chantier-2-a2a-epreuve.md) | Chantier 2 : cadrage métier de la collaboration avec le partenaire, choix de la liaison par arbre de décision, protocole et contrat A2A, filtre des données, validation des réponses, mode dégradé, observabilité et preuves, plan d'épreuve, journal des ajustements |
-| [schemas/](schemas/) | Schémas des chantiers 1 (A et 0 à 3) et 2 (4 à 6), en `.drawio` (modifiable) et en `.png` |
-| [scripts/](scripts/) | Générateurs des schémas (`make_schemas_ch1.py`, `make_schemas_ch2.py`), outils communs et légende en puces |
+| [schemas/](schemas/) | Trois vues d'ensemble (N0 à N2), puis les schémas des chantiers 1 (A et 0 à 3) et 2 (4 à 6), en `.drawio` (modifiable) et en `.png` |
+| [scripts/](scripts/) | Générateurs des schémas (`make_schemas_vues.py`, `make_schemas_ch1.py`, `make_schemas_ch2.py`), outils communs et légende en puces |
 
 ## Les six exigences de la direction des opérations
 
@@ -29,6 +29,22 @@ Les questions de réflexion ont été discutées en groupe pendant la séance du
 | E6 | Aucune boucle infinie ; les métriques par agent (latence, échecs, recours à l'externe) sont visibles ; tout ajustement de l'orchestration provoqué par un scénario d'épreuve est consigné |
 
 Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne volonté d'un LLM : chacune doit être tenue par du code et prouvée par un test.
+
+## Vues d'ensemble, en trois niveaux
+
+Pour entrer dans le dossier avant les deux chantiers : le pourquoi, le système complet, puis l'épreuve.
+
+| Niveau | Ce qu'il montre | Fichiers |
+|---|---|---|
+| N0 · Enjeux et exigences | le problème métier, le contrat durci du partenaire, les six exigences et ce qui tient chacune | [drawio](schemas/schema-N0-enjeux-exigences.drawio), [PNG](schemas/schema-N0-enjeux-exigences.png) |
+| N1 · Système complet | l'équipe (chantier 1), la liaison A2A côté Kaldera (chantier 2) et le partenaire, sur une seule vue | [drawio](schemas/schema-N1-systeme-complet.drawio), [PNG](schemas/schema-N1-systeme-complet.png) |
+| N2 · Épreuve du réel | la boucle rejouer, observer, comparer, ajuster, consigner ; le partenaire simulé ; les huit familles de tests et les chiffres attendus | [drawio](schemas/schema-N2-epreuve-du-reel.drawio), [PNG](schemas/schema-N2-epreuve-du-reel.png) |
+
+![Niveau 0 · Enjeux et exigences](schemas/schema-N0-enjeux-exigences.png)
+
+![Niveau 1 · Système complet](schemas/schema-N1-systeme-complet.png)
+
+![Niveau 2 · Épreuve du réel](schemas/schema-N2-epreuve-du-reel.png)
 
 ## Couverture des schémas attendus par le brief
 
@@ -57,6 +73,7 @@ Les six sont des garanties absolues. Aucune ne peut reposer sur la seule bonne v
 - [x] Réponses du chantier 2, fondées sur le contrat du partenaire (version 2.0) et les 28 scénarios ; points ouverts listés en fin de chantier
 - [x] Schémas du chantier 1 : architecture générale, arbre de décision, carte des agents, orchestration, mémoire partagée (fondés sur les documents reçus ; bornes provisoires)
 - [x] Schémas du chantier 2 : arbre de décision de la liaison, échange A2A et mode dégradé, plan d'épreuve (fondés sur le contrat du partenaire)
+- [x] Trois vues d'ensemble (N0 enjeux et exigences, N1 système complet, N2 épreuve du réel), à jour de la conception au 07/10/2026
 - [ ] Dossier validé par le formateur, avant tout code
 
 ## Questions pour le formateur
