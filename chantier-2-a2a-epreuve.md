@@ -244,6 +244,8 @@ Les demandes sans indicateur ne sont pas concernées : elles n'appellent jamais 
 | `latence_ms` | durée moyenne d'une étape | quelques millisecondes sans appel ; au plus 3 000 ms avec appel |
 | `appels_externes` | appels au partenaire | jamais plus d'un par dossier ; 18 sur l'ensemble des 28 scénarios |
 
+Les métriques sont calculées à partir de la trace, et non comptées à part : `appels` est le nombre de lignes de trace de l'agent, `echecs` celles dont le statut est un échec, `latence_ms` la moyenne de leurs durées, `appels_externes` le nombre de ses appels au partenaire. Une seule source de vérité : la trace et les métriques ne peuvent pas se contredire.
+
 ### Les signaux de l'équipe
 
 - les étapes consommées par demande, comparées à `etapes_max` ;
@@ -259,7 +261,7 @@ Dans le retour de `traiter_lot` (métriques) et dans la fiche de chaque demande 
 - [x] Quels signaux monitore-t-on par agent ?
   **Réponse :** les quatre métriques de `interface.md`, plus les étapes consommées par demande au niveau de la Coordination.
 - [x] Comment montrer qu'une demande a suivi le bon chemin ?
-  **Réponse.** Par sa trace (agent et sections écrites à chaque étape), comparée au chemin attendu par les règles du § 10 ; pour l'agent Anti-fraude, la trace dit en plus s'il y a eu appel, sa durée et la raison d'un échec.
+  **Réponse.** Par sa trace (agent et section remplie à chaque étape), comparée au chemin attendu par les règles du § 10 ; pour l'agent Anti-fraude, la trace dit en plus s'il y a eu appel, sa durée et la raison d'un échec.
 
 ## 8. Le plan d'épreuve [E6]
 
@@ -267,18 +269,44 @@ Dans le retour de `traiter_lot` (métriques) et dans la fiche de chaque demande 
 
 Un test d'intégration soumet chaque scénario de `eval/scenarios.jsonl` à `traiter_lot`, avec le partenaire simulé réglé selon le champ `partenaire` du scénario (`normal`, `lent`, `invalide`, `panne`), et compare chaque fiche au champ `attendu`. Il observe les métriques et la trace, pas seulement l'issue. Le partenaire simulé se pilote avec `scripts/partner_ctl.py`, pas encore reçu ; en attendant, un bouchon local reproduit les quatre comportements.
 
-Le chemin de décision ne contient aucun LLM et le partenaire simulé est déterministe : un rejeu suffit pour juger une issue. Seules les durées varient d'une exécution à l'autre ; les scénarios `panne` sont donc rejoués cinq fois pour mesurer les temps.
+Le chemin de décision ne contient aucun LLM et le partenaire simulé est déterministe : un rejeu suffit pour juger une issue. Seules les durées varient d'une exécution à l'autre ; les scénarios `panne` sont donc rejoués cinq fois pour mesurer les temps. C'est la plus lente des cinq mesures qui est comparée aux 10 s, et non la moyenne : l'engagement porte sur chaque demande.
 
 ### Scénarios × signaux × ajustements
 
 | Scénarios | Exigences | Signaux observés | Critère de réussite | Ajustement possible du chantier 1 |
 |---|---|---|---|---|
-| NOM-01 à NOM-11 (nominaux) | [E1] [E2] | issue, trace (agent, `ecrit`), étapes, appels externes | 11 fiches conformes à `attendu` ; chaque section écrite par son seul propriétaire ; 0 appel au partenaire | frontière (droits d'écriture), `etapes_max` |
+| NOM-01 à NOM-11 (nominaux) | [E1] [E2] | issue, trace (agent, `ecrit`), étapes, appels externes | 11 fiches conformes à `attendu` ; chaque section remplie par le résultat de son seul agent ; 0 appel au partenaire | frontière (droits d'écriture), `etapes_max` |
 | AF-01 à AF-07 (anti-fraude) | [E1] [E3] | appels externes, échecs, message envoyé, `avis_fraude` | 7 appels, 0 échec ; 7 messages de sept champs exactement ; niveau d'avis et issue conformes (AF-03 : avis faible mais plus de 10 000 €, donc escalade) | routage des règles 4 et 5 |
 | INV-01 à INV-07 (réponses invalides) | [E4] [E5] | échecs et leur raison, `avis_fraude`, `mode_degrade` | 7 appels, 7 réponses écartées, chacune au bon niveau de validation ; aucun avis recopié ; 1 500 € ou moins acceptées en mode dégradé (INV-01, 03, 05, 06), au-delà escalade `cellule_fraude` (INV-02, 04, 07) | règles de validation |
 | PAN-01 (partenaire en panne, lot de 5) | [E5] [E6] | appels externes, échecs, issues du lot | 2 appels (0403, 0404), 2 échecs, aucune relance ; 0401 et 0405 non touchés ; 5 fiches conformes | routage du mode dégradé |
 | PAN-02 (partenaire lent à 5 s, lot de 3) | [E5] [E6] | durée de chaque appel, de chaque demande et du lot | 2 appels abandonnés à 3 s ; 0501 sans attente ; chaque demande sous 10 s ; le lot dure environ 3 s, et non 6 s | `duree_max_s` (10 s ou 8 s), traitement du lot en concurrence |
 | BCL-01 (piège à boucle) | [E1] [E6] | longueur de la trace, `arret` | escalade avec `arret` ; trace de 8 étapes au plus | `etapes_max`, borne « même état », file de l'escalade sur borne |
+
+### Les invariants vérifiés sur chaque scénario
+
+Un invariant est une règle qui doit tenir pour toutes les demandes, quel que soit le scénario. Chaque exigence est ainsi vérifiée partout, et pas seulement dans la famille qui la vise.
+
+| Exigence | Invariant vérifié à chaque rejeu |
+|---|---|
+| [E1] | chaque fiche porte une issue (`decision` ou `escalade`) ; chaque demande est traitée en `duree_max_s` au plus |
+| [E2] | dans la trace, chaque section métier n'est remplie que par le résultat de son agent |
+| [E3] | chaque message reçu par le partenaire simulé compte exactement sept champs |
+| [E4] | quand une réponse est écartée, `avis_fraude` vaut `null` et rien de son contenu n'apparaît dans la fiche |
+| [E5] | une demande sans avis exploitable : 1 500 € ou moins, décision avec `mode_degrade: true` ; au-delà, `cellule_fraude` ; une demande sans indicateur n'appelle jamais le partenaire |
+| [E6] | la trace ne dépasse jamais `etapes_max` ; `arret` est renseigné si, et seulement si, une borne a arrêté la demande ; les métriques existent pour chaque agent ; jamais plus d'un appel par dossier |
+
+### Les chiffres attendus sur l'ensemble des 28 scénarios
+
+Comptés dans `eval/scenarios.jsonl` (34 demandes). Un écart sur l'un de ces totaux signale un changement de comportement, même si chaque scénario pris seul semble passer.
+
+| Signal | Valeur attendue | D'où elle vient |
+|---|---|---|
+| Répartition des issues | 16 acceptées, 7 refusées, 4 escalades `gestionnaire`, 6 escalades `cellule_fraude`, 1 escalade dont la file reste à fixer (BCL-01) | champ `attendu` des 34 demandes |
+| Demandes en mode dégradé | 11 : 7 réponses écartées (INV), 2 en panne (PAN-01), 2 délais dépassés (PAN-02) | idem |
+| Bornes atteintes (`arret`) | 1 (BCL-01) | idem |
+| `appels_externes` de l'agent `antifraude` | 18, jamais plus d'un par dossier | 7 AF, 7 INV, 2 PAN-01, 2 PAN-02 |
+| `echecs` de l'agent `antifraude` | 11, les mêmes demandes que celles en mode dégradé | idem |
+| `echecs` des agents internes | 0 : aucun scénario ne simule une défaillance interne | déduit des scénarios |
 
 ### Ce que les scénarios ne couvrent pas, et que des tests unitaires couvrent
 
@@ -290,6 +318,13 @@ Le chemin de décision ne contient aucun LLM et le partenaire simulé est déter
 | tâche à l'état non terminé, ou sans partie `data` | réponse écartée au niveau 3 |
 | reprise avec marqueur d'appel et sans avis | avis indisponible, aucun nouvel appel |
 | ensemble des 28 scénarios | jamais plus d'un appel par dossier, 18 au total |
+
+### Ce que le plan d'épreuve ne couvre pas
+
+- **Le volume.** Aucun test de charge : le volume journalier et les pics restent une question ouverte pour le client (chantier 1, section 1).
+- **Le vrai partenaire.** Tous ses comportements sont simulés ; le contrat garantit une réponse en 2 s, seule la production montrerait la distribution réelle des délais.
+- **Les cas rares du terrain.** Les 28 scénarios sont ceux du client ; un dépôt très tardif ou une panne partielle n'y figurent pas. Les tests unitaires et le journal des ajustements servent à les ajouter quand ils apparaissent.
+- **Les tests d'acceptance et le pilote du partenaire simulé**, cités par `interface.md`, sont absents de l'archive (points ouverts).
 
 ## 9. Le journal des ajustements [E6]
 
