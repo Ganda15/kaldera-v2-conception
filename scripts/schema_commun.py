@@ -20,6 +20,7 @@ ROUGE = "#cc0000"     # interdit (frontière)
 OK = "#6aa84f"        # état final : décision
 ESC = "#bf9000"       # état final : escalade
 VIOLET = "#8e7cc3"    # question métier
+CYAN = "#45818e"      # agent de lecture : un modèle lit un document, sortie validée par un schéma strict
 
 BASE = "whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=12;"
 GAUCHE = "align=left;spacingLeft=10;spacingRight=8;verticalAlign=top;spacingTop=6;"
@@ -28,6 +29,7 @@ S_TITRE = f"text;html=1;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor={VERT
 S_SOUS = "text;html=1;fontFamily=Arial;fontSize=12;fontColor=#555555;align=left;verticalAlign=top;whiteSpace=wrap;"
 S_ORCH = BASE + GAUCHE + f"rounded=1;fillColor=#d9ead3;strokeColor={VERT};strokeWidth=2;"
 S_AGENT = BASE + GAUCHE + f"rounded=1;fillColor=#cfe2f3;strokeColor={BLEU};strokeWidth=1.5;"
+S_LECTEUR = BASE + GAUCHE + f"rounded=1;fillColor=#d0e0e3;strokeColor={CYAN};strokeWidth=2;"
 S_AMBIG = BASE + GAUCHE + f"rounded=1;fillColor=#fce5cd;strokeColor={ORANGE};strokeWidth=2;"
 S_EXT = BASE + f"rounded=1;fillColor=#f3f3f3;strokeColor={GRIS};dashed=1;fontColor=#555555;"
 S_NOTE = BASE + GAUCHE + "shape=note;size=14;fillColor=#ffffff;strokeColor=#999999;fontSize=11;"

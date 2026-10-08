@@ -1,5 +1,6 @@
 # Vues d'ensemble de Kaldera V2, en trois niveaux : N0 les enjeux et les six exigences, N1 le système complet
-# (chantier 1, chantier 2 et partenaire), N2 l'épreuve du réel. Fondées sur l'état de la conception au 07/10/2026.
+# (chantier 1, chantier 2 et partenaire), N2 l'épreuve du réel. Fondées sur l'état de la conception au 07/10/2026 ;
+# N1 mis à jour le 08/10/2026 (lecture des pièces, contrôles dans l'ordre).
 # Palette, styles et classe Schema : schema_commun.py.
 
 from schema_commun import *  # noqa: F403 (palette, styles, Schema)
@@ -78,8 +79,9 @@ s.ecrire("schema-N0-enjeux-exigences", "Niveau 0 · Enjeux et exigences", 1500, 
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Le système complet : l'équipe, la liaison A2A et le partenaire · Niveau 1", 30, 20, 1500, 30, S_TITRE)
-s.box("st", "Une demande entre à gauche ; la Coordination appelle chaque agent avec ses seules entrées et range son résultat ; "
-            "si un indicateur de fraude est présent, un seul appel part chez le partenaire, à travers le filtre et la validation.",
+s.box("st", "Un dossier de pièces est lu à gauche (phase E, ajoutée le 08/10/2026) ; la Coordination appelle chaque agent dans "
+            "l'ordre, avec ses seules entrées, et range son résultat ; si un indicateur de fraude est présent, un seul appel part "
+            "chez le partenaire, à travers le filtre et la validation.",
       30, 54, 1900, 22, S_SOUS)
 
 s.box("ch1", "Chantier 1 · L'équipe et son orchestration", 30, 95, 1150, 835, S_CONTENEUR)
@@ -88,8 +90,9 @@ s.box("ext", "Partenaire (externe)", 1650, 95, 330, 835,
       S_CONTENEUR + f"fillColor=#f7f7f7;strokeColor={GRIS};dashed=1;fontColor=#555555;")
 
 # --- chantier 1 ---
-s.box("recv", "<b>Demande reçue</b><br>traiter_demande ou traiter_lot ; un état créé par demande, jamais partagé (§ 12)",
-      50, 135, 220, 100, S_NOTE)
+s.box("recv", "<b>Lecture des pièces</b> (phase E)<br>Lecteurs de contrat et de pièces : modèle, schéma strict, "
+               "demande § 3 (ou JSON déjà prêt). Un état par demande.",
+      50, 130, 230, 105, S_LECTEUR)
 s.box("coord", f"<b>Coordination · superviseur</b> (code, sans LLM) {e(1, 2, 6)}<br>"
                "Appelle chaque agent directement avec ses seules entrées, reçoit son résultat et le range dans sa section ; "
                "seule à lire et à écrire l'état. Vérifie les bornes avant chaque appel, applique les règles du § 10 "
@@ -97,19 +100,19 @@ s.box("coord", f"<b>Coordination · superviseur</b> (code, sans LLM) {e(1, 2, 6)
 s.box("bornes", f"<b>Bornes</b> {e(1, 6)}, vérifiées avant chaque appel<br>"
                 "• 10 s par demande (§ 12)<br>• 8 étapes, la dernière réservée à l'issue<br>• 2 demandes de complément<br>"
                 "• même état vu deux fois : arrêt<br>• 1 appel au partenaire, abandon à 3 s<br>• 1 s par contrôle interne",
-      880, 135, 280, 165, S_AMBIG)
+      880, 135, 280, 150, S_AMBIG)
 
-s.box("par", "En parallèle : aucun n'a besoin du résultat de l'autre", 50, 290, 530, 215, S_GROUPE)
-s.box("elig", f"<b>Éligibilité</b> {e(2)}<br><i>règles en code</i><br>"
+s.box("par", "Dans l'ordre, 1 à 4 : chacun seulement si le précédent n'a pas conclu", 50, 290, 1120, 230, S_GROUPE + "verticalAlign=bottom;spacingBottom=2;")
+s.box("elig", f"<b>1 · Éligibilité</b> {e(2)}<br><i>règles en code</i><br>"
               "E1 à E5 de la spec : contrat actif, cotisations, carence de 30 jours, délai de déclaration, garantie.<br>"
               + interdit("chiffrer, juger les pièces ou la fraude"), 65, 320, 245, 170, S_AGENT)
-s.box("pieces", f"<b>Pièces justificatives</b> {e(2)}<br><i>code ; un LLM utile en production pour lire les scans</i><br>"
+s.box("pieces", f"<b>2 · Pièces justificatives</b> {e(2)}<br><i>code ; lisibilité rendue par le Lecteur de pièces</i><br>"
                 "Présence, lisibilité, type attendu ; adresse le complément que la Coordination lui confie.<br>"
                 + interdit("conclure, chiffrer, juger la fraude"), 325, 320, 245, 170, S_AGENT)
-s.box("estim", f"<b>Estimation</b> {e(2)}<br><i>calcul en code</i><br>"
+s.box("estim", f"<b>3 · Estimation</b> {e(2)}<br><i>calcul en code</i><br>"
                "Justifié, retenu, moins la franchise, puis le plafond (point ambigu tranché).<br>"
                + interdit("juger la fraude, revenir sur l'éligibilité"), 600, 320, 260, 170, S_AGENT)
-s.box("af", f"<b>Anti-fraude</b> {e(2, 3)}<br><i>seuils en code</i><br>"
+s.box("af", f"<b>4 · Anti-fraude</b> {e(2, 3)}<br><i>seuils en code</i><br>"
             "Reçoit 8 données, dont le montant justifié, jamais l'identité ni l'IBAN. Indicateurs F1 à F4 ; si l'un est présent, un seul appel "
             "au partenaire.<br>" + interdit("émettre un avis lui-même, relancer"), 880, 320, 280, 190, S_AGENT)
 
@@ -118,6 +121,7 @@ s.edge("d1", "coord", "elig", E_DELEG, "", [(311, 300), (285, 300)], sortie=(0.0
 s.edge("d2", "coord", "pieces", E_DELEG, "", sortie=(0.26, 1), entree=(0.5, 0))
 s.edge("d3", "coord", "estim", E_DELEG, "", sortie=(0.77, 1), entree=(0.5, 0))
 s.edge("d4", "coord", "af", E_DELEG, "", [(849, 310), (1020, 310)], sortie=(0.98, 1), entree=(0.5, 0))
+s.edge("p0", "elig", "pieces", E_DEP, "", sortie=(1, 0.75), entree=(0, 0.75))
 s.edge("p1", "pieces", "estim", E_DEP, "factures", sortie=(1, 0.75), entree=(0, 0.75))
 s.edge("p2", "estim", "af", E_DEP, "", sortie=(1, 0.6), entree=(0, 0.6))
 
@@ -197,7 +201,7 @@ s.box("metr", f"<b>Métriques par agent</b> {e(6)}<br>appels, échecs, latence, 
 s.box("journal", f"<b>Journal des ajustements</b> {e(6)}<br>chaque changement provoqué par l'épreuve : scénario, signal, "
                  "valeur avant et après, résultat du rejeu, commit (niveau 2)", 1270, 950, 710, 90, S_NOTE)
 
-s.legende([(VERT, "Code (Coordination, liaison)"), (BLEU, "Agent de contrôle"), (ORANGE, "Bornes, mode dégradé"),
+s.legende([(VERT, "Code (Coordination, liaison)"), (CYAN, "Agent de lecture"), (BLEU, "Agent de contrôle"), (ORANGE, "Bornes, mode dégradé"),
            (GRIS, "Partenaire externe"), (ESC, "Escalade humaine")], 30, 1065)
 s.box("lg2", "Pointillé vert : appel avec ses entrées · trait plein : résultat ou données · pointillé gris : échange avec "
              "le partenaire, à travers la frontière de confiance : tout ce qui la franchit est filtré ou validé · [E1] à [E6] : exigences tenues par le bloc", 30, 1101, 1300, 20, S_SOUS)

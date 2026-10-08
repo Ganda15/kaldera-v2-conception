@@ -13,67 +13,105 @@ CENTRE = "align=center;verticalAlign=middle;spacingLeft=0;"
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Carte des agents · Chantier 1", 30, 20, 1000, 30, S_TITRE)
-s.box("st", "Rôles, frontières, point ambigu tranché, dépendances et parallélisme. Fondé sur specs_metier.md (v3.2) "
-            "et interface.md : une section métier n'est écrite que par un seul agent, et un agent n'écrit qu'une seule section.",
-      30, 54, 1300, 22, S_SOUS)
+s.box("st", "Rôles, frontières, ordre d'exécution et point ambigu tranché. Mis à jour le 08/10/2026 : lecture des pièces "
+            "en amont (phase E), contrôles en séquence avec court-circuit (coordination.derouler).",
+      30, 54, 1360, 22, S_SOUS)
 
+# --- en amont : lecture des pièces (phase E) ---
+s.box("lect", "Avant la Coordination · Lecture des pièces (phase E), hors des 10 s de décision", 30, 88, 1360, 152,
+      S_CONTENEUR)
+s.box("docs", "<b>Pièces de l'assuré</b>, non structurées<br>contrat.pdf · images des pièces jointes (factures, photos, "
+              "dépôt de plainte) · dépôts de l'espace assuré · formulaire declaration.json",
+      50, 123, 290, 105, S_NOTE)
+s.box("lc", "<b>Lecteur de contrat</b> (modèle, schéma strict)<br>Texte du PDF : numéro, formule, date, statut, "
+            "cotisations.<br>" + ROUGE_TXT + "décider, deviner un champ." + FIN, 380, 123, 300, 105, S_LECTEUR)
+s.box("lp", "<b>Lecteur de pièces</b> (netteté en code, puis modèle)<br>Floue : illisible sans appel. Facture nette : "
+            "montant lu. Dans le doute : illisible.<br>" + ROUGE_TXT + "décider, inventer un montant." + FIN,
+      740, 123, 290, 105, S_LECTEUR)
+s.box("json", "<b>Demande au format § 3</b><br>la même que sur le chemin JSON. Contrat lu différent du déclaré, ou "
+              "modèle en panne : escalade gestionnaire, aucun contrôle lancé.", 1070, 123, 300, 105, S_NOTE)
+s.edge("r1", "docs", "lc", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("r2", "lc", "lp", E_DEP, "numéro<br>conforme", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("r3", "lp", "json", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("r4", "json", "orch", E_DEP, "demande § 3", sortie=(0.5, 1), entree=(0.9554, 0))
+
+# --- la Coordination et les quatre contrôles, dans l'ordre ---
 s.box("orch", "<b>Coordination</b> (code, sans LLM) · <b>écrit : issue</b> · seule à lire et à écrire l'état<br>"
-              "Délègue chaque contrôle, vérifie les bornes, applique les règles de décision dans l'ordre (spec § 10), "
-              "conclut la demande. Seule à conclure.<br>"
+              "Délègue chaque contrôle dans l'ordre, vérifie les bornes, applique les règles de décision (spec § 10) "
+              "et conclut dès qu'une règle s'applique. Seule à conclure.<br>"
               + ROUGE_TXT + "refaire un contrôle (éligibilité, pièces, montant, fraude)." + FIN,
-      380, 95, 700, 82, S_ORCH)
+      150, 270, 1120, 78, S_ORCH)
 
-s.box("par", "Exécutés en parallèle : aucun n'a besoin du résultat de l'autre", 30, 225, 440, 420, S_GROUPE)
-s.box("elig", "<b>Éligibilité</b> (règles en code) · <b>section : eligibilite</b><br><br>"
+s.box("elig", "<b>1 · Éligibilité</b> (règles en code) · <b>section : eligibilite</b><br><br>"
               "Vérifie E1 à E5 : contrat actif, cotisations, carence de 30 jours, délai de déclaration, garantie de la formule.<br>"
               "Renvoie : éligible oui ou non, conditions non remplies.<br><br>"
-              + ROUGE_TXT + "chiffrer la demande, appliquer le plafond, juger les pièces ou la fraude." + FIN,
-      50, 255, 400, 175, S_AGENT)
-s.box("pieces", "<b>Pièces justificatives</b> (code) · <b>section : pieces</b><br><br>"
-                "Vérifie présence, lisibilité et type attendu des pièces exigées. Adresse le complément via l'espace "
-                "assuré quand la Coordination le lui confie (demande éligible).<br>"
+              + ROUGE_TXT + "chiffrer, appliquer le plafond, juger les pièces ou la fraude." + FIN,
+      30, 395, 290, 180, S_AGENT)
+s.box("pieces", "<b>2 · Pièces justificatives</b> (code) · <b>section : pieces</b><br><br>"
+                "Vérifie présence, lisibilité (rendue par le Lecteur de pièces) et type attendu. Adresse le complément "
+                "quand la Coordination le lui confie, 2 fois au plus.<br>"
                 "Renvoie : complet, ou manquantes ; les factures lisibles.<br><br>"
-                + ROUGE_TXT + "conclure ou escalader la demande, chiffrer, juger la fraude, décider seul d'un complément." + FIN,
-      50, 445, 400, 185, S_AGENT)
-s.box("estim", "<b>Estimation</b> (règles en code) · <b>section : estimation</b><br><br>"
+                + ROUGE_TXT + "conclure, chiffrer, juger la fraude, décider seul d'un complément." + FIN,
+      386, 395, 290, 180, S_AGENT)
+s.box("estim", "<b>3 · Estimation</b> (règles en code) · <b>section : estimation</b><br><br>"
                "Montant justifié (factures lisibles), montant retenu (le plus petit des deux), "
                "moins la franchise, puis <b>plafond de la formule</b>.<br>"
                "Renvoie : montant justifié et montant estimé.<br><br>"
                + ROUGE_TXT + "juger la fraude, revenir sur l'éligibilité." + FIN,
-      540, 255, 360, 200, S_AGENT)
-s.box("fraude", "<b>Anti-fraude, liaison avec le partenaire</b> (code) · <b>section : avis_fraude</b><br><br>"
-                "Calcule les indicateurs F1 à F4. Si au moins un : un seul appel au partenaire, puis contrôle de sa réponse.<br>"
+      742, 395, 290, 180, S_AGENT)
+s.box("fraude", "<b>4 · Anti-fraude, liaison avec le partenaire</b> (code) · <b>section : avis_fraude</b><br><br>"
+                "Indicateurs F1 à F4. Si au moins un : un seul appel au partenaire, puis contrôle de sa réponse.<br>"
                 "Renvoie : non requis, avis (niveau et score), ou indisponible.<br><br>"
                 + ROUGE_TXT + "émettre un avis en interne, envoyer une donnée hors contrat, relancer un appel." + FIN,
-      1030, 255, 360, 220, S_AGENT)
+      1098, 395, 290, 180, S_AGENT)
+
+s.edge("d1", "orch", "elig", E_DELEG, "délègue", sortie=(0.0223, 1), entree=(0.5, 0))
+s.edge("d2", "orch", "pieces", E_DELEG, "", sortie=(0.3402, 1), entree=(0.5, 0))
+s.edge("d3", "orch", "estim", E_DELEG, "", sortie=(0.658, 1), entree=(0.5, 0))
+s.edge("d4", "orch", "fraude", E_DELEG, "", sortie=(0.9759, 1), entree=(0.5, 0))
+s.edge("s1", "elig", "pieces", E_DEP, "si<br>éligible", sortie=(1, 0.3), entree=(0, 0.3))
+s.edge("s2", "pieces", "estim", E_DEP, "si complet :<br>factures<br>lisibles", sortie=(1, 0.3), entree=(0, 0.3))
+s.edge("s3", "estim", "fraude", E_DEP, "si montant<br>> 0 :<br>montant<br>justifié", sortie=(1, 0.3), entree=(0, 0.3))
+
+# --- les courts-circuits : la Coordination conclut sans lancer la suite ---
+s.box("stop1", "Non éligible : <b>refusée</b> (règle 1)<br>les pièces ne sont jamais vérifiées", 30, 600, 290, 62, S_FIN_OK)
+s.box("stop2", "Pièces encore manquantes, ou aucun dépôt : <b>escalade gestionnaire</b> (règle 2)",
+      386, 600, 290, 62, S_FIN_ESC)
+s.box("stop3", "Montant nul après la franchise : <b>refusée</b> (règle 3)", 742, 600, 290, 62, S_FIN_OK)
+s.edge("k1", "elig", "stop1", E_OK, "non", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("k2", "pieces", "stop2", E_ESC, "non", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("k3", "estim", "stop3", E_OK, "non", sortie=(0.5, 1), entree=(0.5, 0))
+
 s.box("partenaire", "<b>Partenaire anti-fraude</b> (agent A2A externe)<br>"
                     "rend l'avis : faible, modéré ou élevé · contrat, filtre et mode dégradé : chantier 2",
-      1045, 600, 330, 80, S_EXT)
+      1098, 625, 290, 80, S_EXT)
+s.edge("x1", "fraude", "partenaire", E_EXT, "si au moins un indicateur", sortie=(0.3, 1), entree=(0.3, 0))
+s.edge("x2", "partenaire", "fraude", E_EXT, "avis à contrôler", sortie=(0.8, 0), entree=(0.8, 1))
 
-s.box("ambig", "<b>Point ambigu tranché : qui applique le plafond ?</b><br><br>"
-               "La spec range le plafond dans l'éligibilité (§ 4), mais « le contrôle d'éligibilité ne chiffre pas » (§ 2), "
-               "et l'estimation (§ 6) ne le cite pas. <b>Choix : l'Estimation</b>, parce que le plafond est un calcul de montant.<br><br>"
-               "<i>Preuve, scénario NOM-05 : 4 200 € déclarés, moins 300 € de franchise = 3 900 €, plafonnés à 3 000 €.</i>",
-      500, 560, 460, 190, S_AMBIG)
 s.box("autres", "<b>Autres frontières tranchées</b><br>"
                 "• Pièces manquantes : constatées par Pièces ; l'escalade est décidée par la Coordination (règle 2).<br>"
                 "• Montant justifié : calculé par l'Estimation (§ 6), à partir des factures lisibles fournies par Pièces.<br>"
                 "• Indicateurs F1 à F4 : Anti-fraude, après l'Estimation, car F4 compare le montant déclaré au montant justifié.",
-      30, 670, 440, 130, S_NOTE)
+      30, 735, 440, 130, S_NOTE)
+s.box("ambig", "<b>Point ambigu tranché : qui applique le plafond ?</b><br><br>"
+               "La spec range le plafond dans l'éligibilité (§ 4), mais « le contrôle d'éligibilité ne chiffre pas » (§ 2), "
+               "et l'estimation (§ 6) ne le cite pas. <b>Choix : l'Estimation</b>, parce que le plafond est un calcul de montant.<br><br>"
+               "<i>Preuve, scénario NOM-05 : 4 200 € déclarés, moins 300 € de franchise = 3 900 €, plafonnés à 3 000 €.</i>",
+      500, 735, 460, 160, S_AMBIG)
+s.box("ordre", "<b>Ordre et court-circuit</b> (coordination.derouler)<br>"
+               "1 Éligibilité, 2 Pièces (avec 2 compléments au plus), 3 Estimation, 4 Anti-fraude. Un contrôle n'est "
+               "lancé que si le précédent n'a pas conclu : une demande non éligible ne fait jamais vérifier ses pièces. "
+               "C'est la Coordination qui conclut, jamais l'agent.<br>"
+               "Après l'Anti-fraude : règle 4 (avis modéré ou élevé, mode dégradé), règle 5 (plus de 10 000 € : "
+               "gestionnaire), règle 6 (acceptée).", 990, 735, 400, 150, S_NOTE)
 
-s.edge("d1", "orch", "elig", E_DELEG, "délègue", [(420, 205), (410, 205)], sortie=(0.06, 1), entree=(0.9, 0))
-s.edge("d2", "orch", "estim", E_DELEG, "délègue", sortie=(0.4, 1), entree=(0.5, 0))
-s.edge("d3", "orch", "fraude", E_DELEG, "délègue", [(1000, 215), (1210, 215)], sortie=(0.89, 1), entree=(0.5, 0))
-s.edge("p1", "pieces", "estim", E_DEP, "factures lisibles", [(495, 540), (495, 400)], sortie=(1, 0.5), entree=(0, 0.6))
-s.edge("p2", "estim", "fraude", E_DEP, "montant justifié (pour F4)", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("x1", "fraude", "partenaire", E_EXT, "si au moins un indicateur", sortie=(0.4, 1), entree=(0.4, 0))
-s.edge("x2", "partenaire", "fraude", E_EXT, "avis à contrôler", [(1325, 560)], sortie=(0.85, 0), entree=(0.81, 1))
-
-s.legende([(VERT, "Code (coordination)"), (BLEU, "Agent de contrôle"), (ORANGE, "Point ambigu tranché"),
-           (ROUGE, "Frontière : interdit"), (GRIS, "Externe ou chantier 2")], 30, 830)
-s.box("lg2", "Trait plein : dépendance de données · pointillé vert : délégation · « section » : celle que remplit le résultat de l'agent, rangé par la Coordination",
-      30, 866, 900, 20, S_SOUS)
-s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1420, 900)
+s.legende([(VERT, "Code (coordination)"), (CYAN, "Agent de lecture"), (BLEU, "Agent de contrôle"),
+           (ORANGE, "Point ambigu tranché"), (ROUGE, "Frontière : interdit"), (OK, "Décision"), (ESC, "Escalade"),
+           (GRIS, "Externe ou chantier 2")], 30, 920)
+s.box("lg2", "Trait plein : ordre ou données · pointillé vert : délégation · « section » : celle que remplit le résultat "
+             "de l'agent, rangé par la Coordination · agent de lecture : sa sortie est validée par un schéma strict",
+      30, 956, 1300, 20, S_SOUS)
+s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1420, 990)
 
 # =============================================================================================================
 # Schéma 2 : l'orchestration et la terminaison garantie
