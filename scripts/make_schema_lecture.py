@@ -1,6 +1,8 @@
 # Schéma E de Kaldera V2 : la lecture des pièces (phase E), du document non structuré au JSON de la spec § 3.
 # Ajouté le 08/10/2026 : l'entrée réelle est un dossier de pièces (contrat PDF, photos de factures), et non un JSON.
 # Fondé sur le code du dépôt kaldera-bout-en-bout_v2 : src/kaldera/extraction/lecteurs.py et dossier.py.
+# Mis à jour le 08/10/2026 (nuit) : agent Documents et cohérence (src/kaldera/agents/coherence.py), appel lancé à
+# l'arrivée du dossier.
 # Palette, styles et classe Schema : schema_commun.py.
 
 from schema_commun import *  # noqa: F403 (palette, styles, Schema)
@@ -9,7 +11,8 @@ s = Schema()
 s.box("t", "Kaldera V2 · Lecture des pièces : du document au JSON de la spec § 3 · Phase E", 30, 20, 1300, 30, S_TITRE)
 s.box("st", "Les agents de lecture lisent et extraient, ils ne décident jamais. Le code teste d'abord ce qu'il sait "
             "tester ; le modèle ne lit que ce que le code ne sait pas lire ; sa réponse passe par un schéma strict. "
-            "La chaîne de décision du chantier 1 reste inchangée.", 30, 54, 1540, 22, S_SOUS)
+            "En bas, ajouté le 08/10 : l'appel de cohérence (§ 5), lancé dès l'arrivée, en parallèle.",
+      30, 54, 1540, 22, S_SOUS)
 
 # --- le dossier de l'assuré ---
 s.box("dos", "Dossier de l'assuré (dossiers/KAL-26-0101)", 30, 95, 300, 600, S_CONTENEUR)
@@ -48,7 +51,8 @@ s.box("dnet", "Nette ?", 640, 350, 170, 105, S_LOSANGE)
 s.box("p_flou", "<b>illisible</b><br>sans appel au modèle ; aussi une image qui ne s'ouvre pas", 640, 485, 170, 90,
       S_NOTE)
 s.box("dtype", "Facture ?", 840, 350, 170, 105, S_LOSANGE)
-s.box("p_autre", "photo, dépôt de plainte :<br><b>lisible</b> (contenu non vérifié)", 840, 485, 170, 85, S_NOTE)
+s.box("p_autre", "photo, dépôt de plainte :<br><b>lisible</b> ; le contenu est vérifié par la cohérence, en bas",
+      840, 485, 170, 85, S_NOTE)
 s.box("p2", "<b>2 · Modèle</b><br>l'image et la phrase de garde → schéma strict <b>FactureLue</b> : lisible, "
             "montant TTC", 1052, 340, 176, 125, S_LECTEUR)
 s.box("ddoute", "Lisible, montant<br>présent, positif ?", 1040, 490, 200, 110, S_LOSANGE)
@@ -71,8 +75,8 @@ s.box("panne", "<b>Modèle en panne, délai ou réponse hors schéma</b> → Ext
                "on ne lui demande pas de complément.", 360, 735, 560, 105, S_FIN_ESC)
 s.box("json", "<b>Demande au format § 3</b><br>contrat lu, pièces et dépôts lus, formulaire ; identique à ce que "
               "reçoit le chemin JSON", 950, 735, 300, 105, S_NOTE)
-s.box("chaine", "<b>Chaîne du chantier 1, inchangée</b><br>coordination.traiter : Éligibilité, Pièces, Estimation, "
-                "Anti-fraude, règles § 10, fiche de décision", 1280, 735, 290, 105, S_ORCH)
+s.box("chaine", "<b>Chaîne de décision</b><br>coordination.traiter : Éligibilité, Pièces, Cohérence (2 bis), "
+                "Estimation, Anti-fraude, règles § 10, fiche de décision", 1280, 735, 290, 105, S_ORCH)
 s.edge("gpan", "gp", "panne", E_ESC, "lecture impossible (contrat ou facture)", sortie=(0.15, 1), entree=(0.3232, 0))
 s.edge("gjs", "gp", "json", E_DEP, "contrat, pièces et dépôts lus", sortie=(0.5496, 1), entree=(0.25, 0))
 s.edge("form", "dos", "json", E_DEP, "formulaire (declaration.json)", [(315, 875), (1100, 875)], sortie=(0.95, 1),
@@ -84,21 +88,43 @@ s.box("entree", "<b>Avant toute lecture : escalade gestionnaire</b> motivée si 
 s.edge("dent", "dos", "entree", E_ESC, "", sortie=(0.4, 1), entree=(0.44, 0))
 s.edge("jch", "json", "chaine", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
 
+# --- l'agent Documents et cohérence : appel lancé dès l'arrivée, résultat attendu par la Coordination ---
+s.box("gk", "Agent Documents et cohérence · agents/coherence.py · appel lancé dès l'arrivée du dossier, en parallèle des "
+            "deux lecteurs, sur le même budget de 10 s", 360, 900, 1210, 150, S_GROUPE)
+s.box("k1", "<b>1 · Code</b><br>les images nettes du dossier (pièces et dépôts, même mesure de netteté) et la "
+            "déclaration", 380, 935, 230, 95, S_ORCH)
+s.box("k2", "<b>2 · Modèle</b>, un seul appel<br>toutes les images et la déclaration (type, date, description), entre "
+            "balises → schéma strict <b>Interpretation</b> : par pièce, nature, sinistre évoqué, date, concordance",
+      640, 930, 330, 105, S_LECTEUR)
+s.box("k3", "<b>3 · Code</b><br>écarts explicites : autre sinistre, facture de travaux antérieure au sinistre → "
+            "cohérent, contradiction, insuffisant ou non effectué", 1000, 935, 270, 95, S_ORCH)
+s.box("k4", "<b>verdict</b>, attendu par la Coordination après un contrôle des pièces complet ; jamais utilisé : "
+            "noté avec son coût (non_utilise)", 1300, 935, 255, 95, S_NOTE)
+s.edge("k01", "dos", "k1", E_DEP, "", [(345, 683), (345, 982)], sortie=(1, 0.98), entree=(0, 0.5))
+s.edge("k12", "k1", "k2", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("k23", "k2", "k3", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("k34", "k3", "k4", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("k4c", "k4", "chaine", E_DEP, "verdict", sortie=(0.5, 0), entree=(0.5, 1))
+
 # --- garde-fous et mesure ---
 s.box("garde", "<b>Garde-fous</b><br>• Le texte d'un document est une donnée, jamais une consigne : phrase de garde "
                "dans chaque consigne, document entre balises.<br>• Clé dans .env, jamais dans le code ni dans Git ; "
                "aucune relance automatique.<br>• Un seul budget de 10 s par demande, lecture comprise : chaque appel au modèle "
-               "reçoit le temps restant comme délai ; à court de temps, escalade technique. Lecture tracée à part.", 30, 900, 760, 110, S_NOTE)
-s.box("mesure", "<b>Mesure E4</b> (08/10/2026, 34 dossiers, gpt-5.4)<br>100 % sur chaque champ (5 du contrat, "
-                "33 montants, 68 lisibilités) · 34/34 décisions identiques au chemin JSON · 0 lecture impossible · "
-                "67 appels en 24,8 s (6 dossiers lus à la fois) · facture : moyenne 2,38 s, max 5,89 s · 32 180 jetons "
-                "en entrée, 2 480 en sortie.<br>"
-                "<i>Limites : documents de synthèse et propres ; 2 images illisibles seulement, attrapées par le code ; "
-                "le contenu des photos n'est pas vérifié.</i>", 810, 900, 760, 110, S_AMBIG)
+               "reçoit le temps restant comme délai ; à court de temps, escalade technique. Lecture tracée à part.<br>"
+               "• Cohérence : pièces et déclaration entre balises, jamais des consignes ; le modèle décrit, le code rend "
+               "le verdict ; une contradiction va à une personne, jamais à un refus.", 30, 1075, 760, 150, S_NOTE)
+s.box("mesure", "<b>Mesure E4</b> relancée (08/10/2026, commit 5cb2a4e, 34 dossiers, gpt-5.4)<br>100 % sur chaque "
+                "champ (5 du contrat, 33 montants, 68 lisibilités) · 0 lecture impossible · 32/34 décisions identiques au "
+                "chemin JSON : les 2 écarts viennent de la cohérence (factures d'incendie jugées incertaines) · moyenne : "
+                "contrat 1,69 s, facture 2,10 s, cohérence 3,97 s · 85 719 jetons en entrée, 8 300 en sortie.<br>"
+                "<b>Cohérence</b> (essai 4, 42 dossiers étiquetés) : 6/6 contradictions, 0 fausse alerte, 2 examens "
+                "inutiles sur 34, 1 échec technique (budget dépassé).<br>"
+                "<i>Limites : documents de synthèse ; 2 images illisibles seulement ; photos factices.</i>",
+      810, 1075, 760, 150, S_AMBIG)
 
 s.legende([(VERT, "Code, sans modèle"), (CYAN, "Modèle, schéma strict"), (OK, "Suite normale"),
-           (ESC, "Escalade gestionnaire"), (ORANGE, "Mesure")], 30, 1030)
+           (ESC, "Escalade gestionnaire"), (ORANGE, "Mesure")], 30, 1250)
 s.box("lg2", "Losange : test en code · note : résultat de lecture · « illisible » mène à une demande de complément "
              "(règle 2) ; une panne mène à une escalade, jamais à une demande faite à l'assuré",
-      30, 1066, 1400, 20, S_SOUS)
-s.ecrire("schema-E-lecture-des-pieces", "Lecture des pièces", 1600, 1100)
+      30, 1286, 1400, 20, S_SOUS)
+s.ecrire("schema-E-lecture-des-pieces", "Lecture des pièces", 1600, 1320)

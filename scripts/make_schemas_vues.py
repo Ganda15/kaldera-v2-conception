@@ -1,6 +1,6 @@
 # Vues d'ensemble de Kaldera V2, en trois niveaux : N0 les enjeux et les six exigences, N1 le système complet
 # (chantier 1, chantier 2 et partenaire), N2 l'épreuve du réel. Fondées sur l'état de la conception au 07/10/2026 ;
-# N1 mis à jour le 08/10/2026 (lecture des pièces, contrôles dans l'ordre).
+# N1 mis à jour le 08/10/2026 (lecture des pièces, contrôles dans l'ordre ; la nuit, agent Documents et cohérence).
 # Palette, styles et classe Schema : schema_commun.py.
 
 from schema_commun import *  # noqa: F403 (palette, styles, Schema)
@@ -81,18 +81,19 @@ s = Schema()
 s.box("t", "Kaldera V2 · Le système complet : l'équipe, la liaison A2A et le partenaire · Niveau 1", 30, 20, 1500, 30, S_TITRE)
 s.box("st", "Un dossier de pièces est lu à gauche (phase E, ajoutée le 08/10/2026) ; la Coordination appelle chaque agent dans "
             "l'ordre, avec ses seules entrées, et range son résultat ; si un indicateur de fraude est présent, un seul appel part "
-            "chez le partenaire, à travers le filtre et la validation.",
+            "chez le partenaire, à travers le filtre et la validation. Ajouté le 08/10 au soir : l'agent Documents et "
+            "cohérence (2 bis, § 5), sur le chemin des pièces.",
       30, 54, 1900, 22, S_SOUS)
 
-s.box("ch1", "Chantier 1 · L'équipe et son orchestration", 30, 95, 1150, 835, S_CONTENEUR)
-s.box("ch2", "Chantier 2 · La liaison A2A (côté Kaldera)", 1195, 95, 435, 835, S_CONTENEUR)
-s.box("ext", "Partenaire (externe)", 1650, 95, 330, 835,
+s.box("ch1", "Chantier 1 · L'équipe et son orchestration", 30, 95, 1150, 850, S_CONTENEUR)
+s.box("ch2", "Chantier 2 · La liaison A2A (côté Kaldera)", 1195, 95, 435, 850, S_CONTENEUR)
+s.box("ext", "Partenaire (externe)", 1650, 95, 330, 850,
       S_CONTENEUR + f"fillColor=#f7f7f7;strokeColor={GRIS};dashed=1;fontColor=#555555;")
 
 # --- chantier 1 ---
 s.box("recv", "<b>Lecture des pièces</b> (phase E)<br>Lecteurs de contrat et de pièces : modèle, schéma strict, "
-               "demande § 3 (ou JSON déjà prêt). Un état par demande.",
-      50, 130, 230, 105, S_LECTEUR)
+               "demande § 3 (ou JSON déjà prêt). L'appel de cohérence (2 bis) part en même temps. Un état par demande.",
+      50, 130, 230, 120, S_LECTEUR)
 s.box("coord", f"<b>Coordination · superviseur</b> (code, sans LLM) {e(1, 2, 6)}<br>"
                "Appelle chaque agent directement avec ses seules entrées, reçoit son résultat et le range dans sa section ; "
                "seule à lire et à écrire l'état. Vérifie les bornes avant chaque appel, applique les règles du § 10 "
@@ -102,52 +103,61 @@ s.box("bornes", f"<b>Bornes</b> {e(1, 6)}, vérifiées avant chaque appel<br>"
                 "• même état vu deux fois : arrêt<br>• 1 appel au partenaire : au plus 3 s, dans le temps restant<br>• contrôle interne : objectif 1 s",
       880, 135, 280, 150, S_AMBIG)
 
-s.box("par", "Dans l'ordre, 1 à 4 : chacun seulement si le précédent n'a pas conclu", 50, 290, 1120, 230, S_GROUPE + "verticalAlign=bottom;spacingBottom=2;")
+s.box("par", "Dans l'ordre, 1 à 4 (2 bis sur le chemin des pièces) : chacun seulement si le précédent n'a pas conclu",
+      50, 290, 1120, 255, S_GROUPE + "verticalAlign=bottom;spacingBottom=2;")
 s.box("elig", f"<b>1 · Éligibilité</b> {e(2)}<br><i>règles en code</i><br>"
               "E1 à E5 de la spec : contrat actif, cotisations, carence de 30 jours, délai de déclaration, garantie.<br>"
-              + interdit("chiffrer, juger les pièces ou la fraude"), 65, 320, 245, 170, S_AGENT)
+              + interdit("chiffrer, juger les pièces ou la fraude"), 65, 320, 207, 200, S_AGENT)
 s.box("pieces", f"<b>2 · Pièces justificatives</b> {e(2)}<br><i>code ; lisibilité rendue par le Lecteur de pièces</i><br>"
                 "Présence, lisibilité, type attendu ; adresse le complément que la Coordination lui confie.<br>"
-                + interdit("conclure, chiffrer, juger la fraude"), 325, 320, 245, 170, S_AGENT)
+                + interdit("conclure, chiffrer, juger la fraude"), 287, 320, 207, 200, S_AGENT)
+s.box("coh", f"<b>2 bis · Documents et cohérence</b> {e(2)}<br><i>modèle qui décrit, verdict en code</i><br>"
+             "Chemin des pièces (§ 5) : chaque pièce nette se rapporte-t-elle au sinistre déclaré ? Appel lancé à "
+             "l'arrivée.<br>" + interdit("refuser, chiffrer, juger la fraude"), 509, 320, 207, 200, S_LECTEUR)
 s.box("estim", f"<b>3 · Estimation</b> {e(2)}<br><i>calcul en code</i><br>"
                "Justifié, retenu, moins la franchise, puis le plafond (point ambigu tranché).<br>"
-               + interdit("juger la fraude, revenir sur l'éligibilité"), 600, 320, 260, 170, S_AGENT)
+               + interdit("juger la fraude, revenir sur l'éligibilité"), 731, 320, 207, 200, S_AGENT)
 s.box("af", f"<b>4 · Anti-fraude</b> {e(2, 3)}<br><i>seuils en code</i><br>"
             "Reçoit 8 données, dont le montant justifié, jamais l'identité ni l'IBAN. Indicateurs F1 à F4 ; si l'un est présent, un seul appel "
-            "au partenaire.<br>" + interdit("émettre un avis lui-même, relancer"), 880, 320, 280, 190, S_AGENT)
+            "au partenaire.<br>" + interdit("émettre un avis lui-même, relancer"), 953, 320, 207, 200, S_AGENT)
 
 s.edge("e0", "recv", "coord", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.4))
-s.edge("d1", "coord", "elig", E_DELEG, "", [(311, 300), (285, 300)], sortie=(0.02, 1), entree=(0.9, 0))
-s.edge("d2", "coord", "pieces", E_DELEG, "", sortie=(0.26, 1), entree=(0.5, 0))
-s.edge("d3", "coord", "estim", E_DELEG, "", sortie=(0.77, 1), entree=(0.5, 0))
-s.edge("d4", "coord", "af", E_DELEG, "", [(849, 310), (1020, 310)], sortie=(0.98, 1), entree=(0.5, 0))
+s.edge("d1", "coord", "elig", E_DELEG, "", [(311, 300), (251, 300)], sortie=(0.02, 1), entree=(0.9, 0))
+s.edge("d2", "coord", "pieces", E_DELEG, "", sortie=(0.1607, 1), entree=(0.5, 0))
+s.edge("d2b", "coord", "coh", E_DELEG, "", sortie=(0.5571, 1), entree=(0.5, 0))
+s.edge("d3", "coord", "estim", E_DELEG, "", sortie=(0.8804, 1), entree=(0.3, 0))
+s.edge("d4", "coord", "af", E_DELEG, "", [(849, 310), (1056, 310)], sortie=(0.98, 1), entree=(0.5, 0))
 s.edge("p0", "elig", "pieces", E_DEP, "", sortie=(1, 0.75), entree=(0, 0.75))
-s.edge("p1", "pieces", "estim", E_DEP, "factures", sortie=(1, 0.75), entree=(0, 0.75))
-s.edge("p2", "estim", "af", E_DEP, "", sortie=(1, 0.6), entree=(0, 0.6))
+s.edge("p1", "pieces", "coh", E_DEP, "", sortie=(1, 0.75), entree=(0, 0.75))
+s.edge("p1b", "coh", "estim", E_DEP, "", sortie=(1, 0.75), entree=(0, 0.75))
+s.edge("p2", "estim", "af", E_DEP, "", sortie=(1, 0.75), entree=(0, 0.75))
 
-s.box("etat", f"État de la demande (mémoire de session) {e(2, 3)}", 50, 540, 560, 375, S_CONTENEUR)
+s.box("etat", f"État de la demande (mémoire de session) {e(2, 3)}", 50, 555, 560, 375, S_CONTENEUR)
 SEC_N = BASE + GAUCHE + "rounded=0;fillColor=#ffffff;strokeColor=#999999;fontSize=11;"
 SEC = [("s_dem", "<b>demande</b> : reçue, lecture seule", None),
        ("s_eli", "<b>eligibilite</b> : résultat d'Éligibilité", None), ("s_pie", "<b>pieces</b> : résultat de Pièces", None),
+       ("s_coh", "<b>coherence</b> : résultat de 2 bis, hors des 5 sections métier", "coh"),
        ("s_est", "<b>estimation</b> : résultat d'Estimation", None), ("s_avi", "<b>avis_fraude</b> : résultat d'Anti-fraude", None),
        ("s_iss", "<b>issue</b> : écrite par la Coordination", "orch"),
        ("s_tra", "<b>trace</b> : une ligne par étape (agent, ecrit)", "orch")]
 SEC_A = BASE + GAUCHE + MILIEU + f"rounded=0;fillColor=#cfe2f3;strokeColor={BLEU};fontSize=11;"
 SEC_O = BASE + GAUCHE + MILIEU + f"rounded=0;fillColor=#d9ead3;strokeColor={VERT};fontSize=11;"
+SEC_C = BASE + GAUCHE + MILIEU + f"rounded=0;fillColor=#d0e0e3;strokeColor={CYAN};fontSize=11;"
 for k, (sid, txt, kind) in enumerate(SEC):
-    style = SEC_N + MILIEU if k == 0 else (SEC_O if kind == "orch" else SEC_A)
-    s.box(sid, txt, 65 + (k % 2) * 270, 580 + (k // 2) * 70, 260, 58, style)
+    style = SEC_N + MILIEU if k == 0 else {"orch": SEC_O, "coh": SEC_C}.get(kind, SEC_A)
+    s.box(sid, txt, 65 + (k % 2) * 270, 595 + (k // 2) * 70, 260, 58, style)
 s.box("etat_n", "Seule la Coordination lit et écrit ; aucun agent ne reçoit l'état complet ; jamais exposé par A2A.",
-      65, 865, 530, 40, S_SOUS)
-s.edge("lit", "coord", "etat", E_DEP + "startArrow=block;startFill=1;", "lit et range", [(40, 247), (40, 595)],
+      65, 880, 530, 40, S_SOUS)
+s.edge("lit", "coord", "etat", E_DEP + "startArrow=block;startFill=1;", "lit et range", [(40, 247), (40, 611)],
        sortie=(0, 0.9), entree=(0, 0.15))
 
-s.box("fF", "Indicateur<br>F1 à F4 ?", 930, 545, 180, 90, S_LOSANGE)
+s.box("fF", "Indicateur<br>F1 à F4 ?", 966, 555, 180, 90, S_LOSANGE)
 s.edge("af_f", "af", "fF", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.box("regles", f"<b>Règles de décision (§ 10)</b> {e(1)}<br>dans l'ordre, la première qui s'applique fixe l'issue : "
-                "éligible ? pièces complètes ? montant nul ? avis anti-fraude ? plus de 10 000 € ? sinon acceptée",
+                "éligible ? pièces complètes ? pièces cohérentes (chemin des pièces) ? montant nul ? avis anti-fraude ? "
+                "plus de 10 000 € ? sinon acceptée",
       640, 660, 250, 135, S_ORCH)
-s.edge("f_non", "fF", "regles", E_DEP, "non : avis non requis", [(765, 590)], sortie=(0, 0.5), entree=(0.5, 0))
+s.edge("f_non", "fF", "regles", E_DEP, "non : avis non requis", [(765, 600)], sortie=(0, 0.5), entree=(0.5, 0))
 s.box("o_acc", "<b>Acceptée</b> · montant remboursé", 920, 660, 240, 48, S_FIN_OK)
 s.box("o_ref", "<b>Refusée</b> · motif, conditions citées", 920, 718, 240, 48, S_FIN_OK)
 s.box("o_ges", "<b>Escalade gestionnaire</b> · motif", 920, 776, 240, 48, S_FIN_ESC)
@@ -174,7 +184,7 @@ s.box("degr", f"<b>Mode dégradé (§ 9)</b> {e(5)}<br>avis indisponible (budget
               "• 1 500 € ou moins : la demande poursuit, marquée<br>• au-delà : escalade cellule_fraude<br>"
               "Les demandes sans indicateur ne sont jamais touchées.", 1420, 720, 195, 195, S_AMBIG)
 s.box("tard", "Réponse tardive : jamais lue. Doublon : registre (une exécution), sinon -32029 = erreur.", 1215, 845, 190, 70, S_NOTE)
-s.edge("f_oui", "fF", "filtre", E_DEP, "oui", [(1185, 590), (1185, 195)], sortie=(1, 0.5), entree=(0, 0.5))
+s.edge("f_oui", "fF", "filtre", E_DEP, "oui", [(1185, 600), (1185, 195)], sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("x1", "filtre", "appel", E_DEP, "7 champs", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("x2", "valid", "dv", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("x3", "dv", "retenu", E_OK, "oui", sortie=(0, 0.5), entree=(0.5, 0))
@@ -195,17 +205,18 @@ s.edge("y3", "tache", "valid", E_EXT, "", sortie=(0, 0.5), entree=(1, 0.5))
 
 # --- bas : preuve, métriques, journal ---
 s.box("preuve", f"<b>Plan de preuve</b> {e(1, 2)}<br>28 scénarios rejoués contre le partenaire simulé : 34/34 conformes, mesuré "
-                "le 08/10 (outils/mesurer_epreuve.py) ; chaque section remplie par son seul agent (niveau 2)", 30, 950, 600, 90, S_NOTE)
+                "le 08/10 (outils/mesurer_epreuve.py) ; chaque section remplie par son seul agent (niveau 2) ; cohérence : "
+                "42 dossiers étiquetés, 6/6 contradictions, 0 fausse alerte", 30, 965, 600, 90, S_NOTE)
 s.box("metr", f"<b>Métriques par agent</b> {e(6)}<br>appels, échecs, latence, appels externes, calculés depuis la trace ; "
-              "signaux d'équipe : étapes, bornes atteintes, issues, part en mode dégradé", 650, 950, 600, 90, S_EXT)
+              "signaux d'équipe : étapes, bornes atteintes, issues, part en mode dégradé", 650, 965, 600, 90, S_EXT)
 s.box("journal", f"<b>Journal des ajustements</b> {e(6)}<br>chaque changement provoqué par l'épreuve : scénario, signal, "
-                 "valeur avant et après, résultat du rejeu, commit (niveau 2)", 1270, 950, 710, 90, S_NOTE)
+                 "valeur avant et après, résultat du rejeu, commit (niveau 2)", 1270, 965, 710, 90, S_NOTE)
 
-s.legende([(VERT, "Code (Coordination, liaison)"), (CYAN, "Agent de lecture"), (BLEU, "Agent de contrôle"), (ORANGE, "Bornes, mode dégradé"),
-           (GRIS, "Partenaire externe"), (ESC, "Escalade humaine")], 30, 1065)
+s.legende([(VERT, "Code (Coordination, liaison)"), (CYAN, "Agent avec modèle (lecture, cohérence)"), (BLEU, "Agent de contrôle"),
+           (ORANGE, "Bornes, mode dégradé"), (GRIS, "Partenaire externe"), (ESC, "Escalade humaine")], 30, 1080)
 s.box("lg2", "Pointillé vert : appel avec ses entrées · trait plein : résultat ou données · pointillé gris : échange avec "
-             "le partenaire, à travers la frontière de confiance : tout ce qui la franchit est filtré ou validé · [E1] à [E6] : exigences tenues par le bloc", 30, 1101, 1300, 20, S_SOUS)
-s.ecrire("schema-N1-systeme-complet", "Niveau 1 · Système complet", 2000, 1140)
+             "le partenaire, à travers la frontière de confiance : tout ce qui la franchit est filtré ou validé · [E1] à [E6] : exigences tenues par le bloc", 30, 1116, 1300, 20, S_SOUS)
+s.ecrire("schema-N1-systeme-complet", "Niveau 1 · Système complet", 2000, 1155)
 
 # =============================================================================================================
 # N2 : l'épreuve du réel
