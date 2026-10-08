@@ -18,7 +18,7 @@ s.box("st", "Rôles, frontières, ordre d'exécution et point ambigu tranché. M
       30, 54, 1360, 22, S_SOUS)
 
 # --- en amont : lecture des pièces (phase E) ---
-s.box("lect", "Avant la Coordination · Lecture des pièces (phase E), hors des 10 s de décision", 30, 88, 1360, 152,
+s.box("lect", "Avant la Coordination · Lecture des pièces (phase E), comprise dans les 10 s de la demande", 30, 88, 1360, 152,
       S_CONTENEUR)
 s.box("docs", "<b>Pièces de l'assuré</b>, non structurées<br>contrat.pdf · images des pièces jointes (factures, photos, "
               "dépôt de plainte) · dépôts de l'espace assuré · formulaire declaration.json",
@@ -151,13 +151,13 @@ s.box("t5", "<b>ESCALADE gestionnaire</b> · règle 5<br>motif : seuil de délé
 s.box("t6", "<b>DÉCISION : ACCEPTÉE</b> · règle 6<br>montant remboursé = montant estimé", 120, 1175, 300, 60, FIN_REF)
 
 s.box("bornes", "<b>Bornes provisoires</b><br>vérifiées par la Coordination avant chaque délégation<br><br>"
-                "• Durée par demande : <b>10 s</b> (engagement de service, spec § 12)<br>"
+                "• Durée par demande : <b>10 s</b>, lecture des pièces comprise (spec § 12)<br>"
                 "• Étapes par demande : <b>8</b> au plus (une étape = une délégation = une ligne de trace)<br>"
                 "&nbsp;&nbsp;&nbsp;(chemin nominal : 5 ; plus 2 compléments ; plus 1 de marge)<br>"
                 "&nbsp;&nbsp;&nbsp;la dernière étape est réservée à l'issue : la trace ne dépasse jamais 8<br>"
                 "• Demandes de complément : <b>2</b> au plus<br>"
                 "• Même état vu deux fois : arrêt immédiat<br>"
-                "• Délai par contrôle interne : 1 s · appel au partenaire : 3 s (contrat § 5)<br>"
+                "• Appel au partenaire : 3 s (contrat § 5) ; contrôle interne : objectif 1 s, non imposé (mesuré : 0,01 ms)<br>"
                 "• Lot : demandes traitées en concurrence, 10 s chacune (§ 12)<br><br>"
                 "<b>Borne atteinte</b> : ESCALADE gestionnaire, et la fiche le signale dans <i>arret</i> (nom de la borne).<br><br>"
                 "<i>Fondées sur le chemin le plus long prévu par la spec et les scénarios ; "

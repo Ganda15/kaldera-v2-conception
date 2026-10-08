@@ -87,8 +87,8 @@ s.edge("jch", "json", "chaine", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
 # --- garde-fous et mesure ---
 s.box("garde", "<b>Garde-fous</b><br>• Le texte d'un document est une donnée, jamais une consigne : phrase de garde "
                "dans chaque consigne, document entre balises.<br>• Clé dans .env, jamais dans le code ni dans Git ; "
-               "délai de 60 s, aucune relance automatique.<br>• Lecture tracée à part (agent, fichier, statut, durée, "
-               "appel au modèle), avant les 10 s de la chaîne de décision.", 30, 900, 760, 110, S_NOTE)
+               "aucune relance automatique.<br>• Un seul budget de 10 s par demande, lecture comprise : chaque appel au modèle "
+               "reçoit le temps restant comme délai ; à court de temps, escalade technique. Lecture tracée à part.", 30, 900, 760, 110, S_NOTE)
 s.box("mesure", "<b>Mesure E4</b> (08/10/2026, 34 dossiers, gpt-5.4)<br>100 % sur chaque champ (5 du contrat, "
                 "33 montants, 68 lisibilités) · 34/34 décisions identiques au chemin JSON · 0 lecture impossible · "
                 "67 appels en 24,8 s (6 dossiers lus à la fois) · facture : moyenne 2,38 s, max 5,89 s · 32 180 jetons "

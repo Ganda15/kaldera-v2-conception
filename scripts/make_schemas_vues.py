@@ -98,8 +98,8 @@ s.box("coord", f"<b>Coordination · superviseur</b> (code, sans LLM) {e(1, 2, 6)
                "seule à lire et à écrire l'état. Vérifie les bornes avant chaque appel, applique les règles du § 10 "
                "dans l'ordre, conclut. Ne refait jamais un contrôle.", 300, 135, 560, 125, S_ORCH)
 s.box("bornes", f"<b>Bornes</b> {e(1, 6)}, vérifiées avant chaque appel<br>"
-                "• 10 s par demande (§ 12)<br>• 8 étapes, la dernière réservée à l'issue<br>• 2 demandes de complément<br>"
-                "• même état vu deux fois : arrêt<br>• 1 appel au partenaire, abandon à 3 s<br>• 1 s par contrôle interne",
+                "• 10 s par demande, lecture comprise (§ 12)<br>• 8 étapes, la dernière réservée à l'issue<br>• 2 demandes de complément<br>"
+                "• même état vu deux fois : arrêt<br>• 1 appel au partenaire, abandon à 3 s<br>• contrôle interne : objectif 1 s",
       880, 135, 280, 150, S_AMBIG)
 
 s.box("par", "Dans l'ordre, 1 à 4 : chacun seulement si le précédent n'a pas conclu", 50, 290, 1120, 230, S_GROUPE + "verticalAlign=bottom;spacingBottom=2;")
