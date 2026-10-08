@@ -44,11 +44,12 @@ s.box("contrat", "<b>Le partenaire a durci son contrat (version 2.0)</b><br><br>
                  + ok("Objectif : une issue pour chaque demande en 10 s, même partenaire en panne, prouvée sur "
                       "28 scénarios."), 30, 260, 650, 165, S_AMBIG)
 s.box("reponse", "<b>La réponse de la conception</b><br>"
-                 "• une Coordination en code et quatre agents de contrôle (niveau 1, chantier 1)<br>"
+                 "• une Coordination en code, quatre contrôles en code et des agents avec modèle pour les documents : "
+                 "lecture et cohérence avec la déclaration (niveau 1, chantier 1)<br>"
                  "• une mémoire de session lue et écrite par la seule Coordination<br>"
                  "• une liaison A2A filtrée et validée, avec un mode dégradé (niveau 1, chantier 2)<br>"
                  "• un plan d'épreuve de 28 scénarios, et un journal des ajustements (niveau 2)",
-      30, 445, 650, 135, S_ORCH)
+      30, 445, 650, 150, S_ORCH)
 
 EXIG = [
     ("E1", "Toute demande se termine par une décision ou une escalade humaine motivée, jamais par un blocage silencieux.",

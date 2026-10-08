@@ -245,32 +245,36 @@ s.box("t", "Kaldera V2 · Un budget de 10 secondes, deux chemins de repli · Cha
 s.box("st", "Une seule échéance par demande, posée à l'arrivée du dossier. Exemple illustratif : les durées sont "
             "choisies pour l'explication, ce n'est pas une mesure.", 30, 54, 1250, 22, S_SOUS)
 PX = 120  # pixels par seconde
-s.box("seg1", "<b>Lecture des pièces</b>, puis Éligibilité, Pièces et Estimation", 60, 100, 8 * PX, 60,
+s.box("seg1", "<b>Lecture des pièces</b>, puis Éligibilité, Pièces, Cohérence (2 bis) et Estimation", 60, 100, 8 * PX, 60,
       S_ORCH + CENTRE)
+s.box("segc", "<b>Appel de cohérence</b> (2 bis), lancé à 0 s, en parallèle de la lecture", 60, 168, 5 * PX, 40,
+      S_LECTEUR + CENTRE + "dashed=1;")
 s.box("seg2", "<b>Partenaire</b><br>1,6 s au plus", 60 + 8 * PX, 100, int(1.6 * PX), 60, S_EXT + CENTRE)
 s.box("seg3", "fiche", 60 + int(9.6 * PX), 100, int(0.4 * PX), 60, S_AMBIG + CENTRE + "fontSize=10;")
 TICK = "text;html=1;fontFamily=Arial;fontSize=11;fontColor=#555555;align=center;verticalAlign=top;"
 for libelle, sec in [("0 s", 0), ("8 s", 8), ("9,6 s", 9.6), ("10 s", 10)]:
-    s.box(f"tk{sec}", libelle, 60 + int(sec * PX) - 30, 165, 60, 20, TICK)
-s.box("explic", "<b>0 s</b> : le dossier arrive ; échéance = 10 s − 0,4 s de réserve pour la fiche, soit 9,6 s.<br>"
+    s.box(f"tk{sec}", libelle, 60 + int(sec * PX) - 30, 214, 60, 20, TICK)
+s.box("explic", "<b>0 s</b> : le dossier arrive ; échéance = 10 s − 0,4 s de réserve pour la fiche, soit 9,6 s. "
+                "L'appel de cohérence part aussitôt (chemin des pièces) : la Coordination attend son verdict après le "
+                "contrôle des pièces.<br>"
                 "<b>8 s</b> : lecture et contrôles finis ; un indicateur F1 à F4 demande l'avis du partenaire.<br>"
                 "<b>8 à 9,6 s</b> : le partenaire reçoit min(3 s, 9,6 − 8) = 1,6 s, et non 3 s.<br>"
                 "<b>9,6 à 10 s</b> : la Coordination produit la fiche, avec l'avis conforme ou le repli prévu (réserve de 0,4 s, tirée de la mesure).",
-      60, 200, 1200, 95, S_NOTE)
+      60, 250, 1200, 115, S_NOTE)
 
-s.box("g_titre", "Repli 1 · chantier 1", 60, 320, 560, 30, S_SOUS + "fontStyle=1;")
-s.box("lect", "<b>Lecture impossible</b><br>modèle en panne, délai dépassé pendant la lecture, contrat illisible",
-      60, 355, 560, 70, S_LECTEUR)
+s.box("g_titre", "Repli 1 · chantier 1", 60, 395, 560, 30, S_SOUS + "fontStyle=1;")
+s.box("lect", "<b>Lecture ou cohérence impossible</b><br>modèle en panne, délai dépassé pendant la lecture, contrat "
+              "illisible ; verdict de cohérence absent à l'échéance", 60, 430, 560, 70, S_LECTEUR)
 s.box("lect_fin", "<b>ESCALADE gestionnaire</b>, motif technique<br>aucune décision sur des données incomplètes ; "
-                  "la règle des 1 500 € ne s'applique pas", 60, 470, 560, 75, FIN_ESC)
+                  "la règle des 1 500 € ne s'applique pas", 60, 545, 560, 75, FIN_ESC)
 s.edge("l1", "lect", "lect_fin", E_ESC, "", sortie=(0.5, 1), entree=(0.5, 0))
 
-s.box("d_titre", "Repli 2 · chantier 2", 700, 320, 560, 30, S_SOUS + "fontStyle=1;")
+s.box("d_titre", "Repli 2 · chantier 2", 700, 395, 560, 30, S_SOUS + "fontStyle=1;")
 s.box("avis", "<b>Avis anti-fraude indisponible</b>, alors que le contrôle était requis<br>budget épuisé, requête "
-              "refusée, délai, erreur ou réponse écartée", 700, 355, 560, 70, S_AMBIG)
-s.box("dd7", "Montant estimé<br>≤ 1 500 € ?", 880, 450, 200, 90, S_LOSANGE)
-s.box("cont7", "<b>Continue</b>, marquée mode dégradé<br>règles 5 et 6", 700, 570, 260, 65, FIN_OK)
-s.box("esc7", "<b>ESCALADE cellule_fraude</b><br>contrôle manuel", 1000, 570, 260, 65, FIN_ESC)
+              "refusée, délai, erreur ou réponse écartée", 700, 430, 560, 70, S_AMBIG)
+s.box("dd7", "Montant estimé<br>≤ 1 500 € ?", 880, 525, 200, 90, S_LOSANGE)
+s.box("cont7", "<b>Continue</b>, marquée mode dégradé<br>règles 5 et 6", 700, 645, 260, 65, FIN_OK)
+s.box("esc7", "<b>ESCALADE cellule_fraude</b><br>contrôle manuel", 1000, 645, 260, 65, FIN_ESC)
 s.edge("a1", "avis", "dd7", E_ESC, "§ 9", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("a2", "dd7", "cont7", E_OK, "oui", sortie=(0, 0.5), entree=(0.5, 0))
 s.edge("a3", "dd7", "esc7", E_ESC, "non", sortie=(1, 0.5), entree=(0.5, 0))
@@ -279,7 +283,7 @@ s.box("pourquoi", "<b>Pourquoi deux traitements ?</b> Sans lecture fiable, aucun
                   "Sans avis du partenaire, les contrôles sont faits et le montant est connu : la spec (§ 9) prévoit la "
                   "règle des 1 500 €. Sans indicateur, aucun avis n'est demandé : jamais de mode dégradé. Échéance déjà "
                   "dépassée avant l'Anti-fraude : escalade gestionnaire par la borne duree_max_s.",
-      60, 665, 1200, 80, S_NOTE)
-s.legende([(VERT, "Code"), (CYAN, "Agent de lecture"), (GRIS, "Partenaire externe"), (ORANGE, "Avis indisponible"),
-           (OK, "Suite normale"), (ESC, "Escalade")], 30, 770)
-s.ecrire("schema-7-budget-10-s", "Budget de 10 s et replis", 1300, 810)
+      60, 740, 1200, 80, S_NOTE)
+s.legende([(VERT, "Code"), (CYAN, "Agent avec modèle (lecture, cohérence)"), (GRIS, "Partenaire externe"),
+           (ORANGE, "Avis indisponible"), (OK, "Suite normale"), (ESC, "Escalade")], 30, 845)
+s.ecrire("schema-7-budget-10-s", "Budget de 10 s et replis", 1300, 885)
