@@ -119,37 +119,36 @@ s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1420, 990)
 s = Schema()
 s.box("t", "Kaldera V2 · Orchestration et terminaison garantie · Chantier 1", 30, 20, 1100, 30, S_TITRE)
 s.box("st", "Chaque losange est une règle de décision appliquée par la Coordination, dans l'ordre de la spec (§ 10) ; "
-            "la première qui s'applique fixe l'issue. Chaque chemin finit par une décision ou par une escalade motivée.",
+            "la première qui s'applique fixe l'issue. Contrôles en séquence (mis à jour le 08/10/2026) : une demande non "
+            "éligible ne fait jamais vérifier ses pièces. Chaque chemin finit par une décision ou par une escalade motivée.",
       30, 54, 1300, 22, S_SOUS)
 
 FIN_REF = S_FIN_OK + CENTRE + "fontSize=11;"
 FIN_ESC = S_FIN_ESC + CENTRE + "fontSize=11;"
 s.box("s0", "<b>Demande reçue</b><br>état créé, section demande en lecture seule", 120, 95, 300, 52, S_ORCH + CENTRE)
-s.box("par", "En parallèle", 30, 172, 520, 100, S_GROUPE)
-s.box("e", "<b>Éligibilité</b><br>E1 à E5", 50, 200, 230, 55, S_AGENT + CENTRE)
-s.box("p", "<b>Pièces</b><br>présence, lisibilité", 300, 200, 230, 55, S_AGENT + CENTRE)
+s.box("e", "<b>Éligibilité</b> (contrôle 1)<br>E1 à E5", 155, 172, 230, 55, S_AGENT + CENTRE)
+s.box("r1", "Éligible ?", 160, 255, 220, 90, S_LOSANGE)
+s.box("t1", "<b>DÉCISION : REFUSÉE</b> · règle 1<br>0 € ; le motif cite les conditions non remplies", 480, 270, 340, 60, FIN_REF)
+s.box("p", "<b>Pièces</b> (contrôle 2)<br>présence, lisibilité", 155, 375, 230, 55, S_AGENT + CENTRE)
 
-s.box("r1", "Éligible ?", 160, 300, 220, 90, S_LOSANGE)
-s.box("t1", "<b>DÉCISION : REFUSÉE</b> · règle 1<br>0 € ; le motif cite les conditions non remplies", 480, 315, 340, 60, FIN_REF)
+s.box("r2", "Pièces exigées<br>présentes et lisibles ?", 160, 455, 220, 100, S_LOSANGE)
+s.box("c", "<b>Pièces : demande de complément</b> (2 au plus)<br>via l'espace assuré, puis nouveau contrôle", 480, 475, 340, 60, S_AGENT + CENTRE)
+s.box("t2", "<b>ESCALADE gestionnaire</b> · règle 2<br>motif : pièces manquantes", 880, 475, 300, 60, FIN_ESC)
 
-s.box("r2", "Pièces exigées<br>présentes et lisibles ?", 160, 420, 220, 100, S_LOSANGE)
-s.box("c", "<b>Pièces : demande de complément</b> (2 au plus)<br>via l'espace assuré, puis nouveau contrôle", 480, 440, 340, 60, S_AGENT + CENTRE)
-s.box("t2", "<b>ESCALADE gestionnaire</b> · règle 2<br>motif : pièces manquantes", 880, 440, 300, 60, FIN_ESC)
+s.box("est", "<b>Estimation</b><br>justifié, retenu, franchise, plafond", 120, 595, 300, 58, S_AGENT + CENTRE)
+s.box("r3", "Montant estimé<br>nul ?", 160, 685, 220, 90, S_LOSANGE)
+s.box("t3", "<b>DÉCISION : REFUSÉE</b> · règle 3<br>0 € ; dommage inférieur ou égal à la franchise", 480, 700, 340, 60, FIN_REF)
 
-s.box("est", "<b>Estimation</b><br>justifié, retenu, franchise, plafond", 120, 560, 300, 58, S_AGENT + CENTRE)
-s.box("r3", "Montant estimé<br>nul ?", 160, 650, 220, 90, S_LOSANGE)
-s.box("t3", "<b>DÉCISION : REFUSÉE</b> · règle 3<br>0 € ; dommage inférieur ou égal à la franchise", 480, 665, 340, 60, FIN_REF)
+s.box("r4", "Anti-fraude :<br>un indicateur F1 à F4 ?", 160, 810, 220, 100, S_LOSANGE)
+s.box("pa", "<b>Avis du partenaire</b> (chantier 2)<br>un seul appel, 3 s au plus, aucune relance", 480, 830, 340, 60, S_EXT)
+s.box("t4a", "<b>ESCALADE gestionnaire</b> · avis modéré<br>motif : contrôle renforcé", 880, 780, 300, 56, FIN_ESC)
+s.box("t4b", "<b>ESCALADE cellule_fraude</b> · avis élevé<br>motif : suspicion de fraude", 880, 850, 300, 56, FIN_ESC)
+s.box("deg", "<b>Avis indisponible : mode dégradé</b> (§ 9)<br>délai dépassé, erreur ou réponse non conforme", 480, 940, 340, 60, S_EXT)
+s.box("t4c", "<b>ESCALADE cellule_fraude</b><br>montant estimé &gt; 1 500 €, mode dégradé", 880, 940, 300, 56, FIN_ESC)
 
-s.box("r4", "Anti-fraude :<br>un indicateur F1 à F4 ?", 160, 775, 220, 100, S_LOSANGE)
-s.box("pa", "<b>Avis du partenaire</b> (chantier 2)<br>un seul appel, 3 s au plus, aucune relance", 480, 795, 340, 60, S_EXT)
-s.box("t4a", "<b>ESCALADE gestionnaire</b> · avis modéré<br>motif : contrôle renforcé", 880, 745, 300, 56, FIN_ESC)
-s.box("t4b", "<b>ESCALADE cellule_fraude</b> · avis élevé<br>motif : suspicion de fraude", 880, 815, 300, 56, FIN_ESC)
-s.box("deg", "<b>Avis indisponible : mode dégradé</b> (§ 9)<br>délai dépassé, erreur ou réponse non conforme", 480, 905, 340, 60, S_EXT)
-s.box("t4c", "<b>ESCALADE cellule_fraude</b><br>montant estimé &gt; 1 500 €, mode dégradé", 880, 905, 300, 56, FIN_ESC)
-
-s.box("r5", "Montant estimé<br>&gt; 10 000 € ?", 160, 1010, 220, 90, S_LOSANGE)
-s.box("t5", "<b>ESCALADE gestionnaire</b> · règle 5<br>motif : seuil de délégation dépassé", 480, 1025, 340, 60, FIN_ESC)
-s.box("t6", "<b>DÉCISION : ACCEPTÉE</b> · règle 6<br>montant remboursé = montant estimé", 120, 1140, 300, 60, FIN_REF)
+s.box("r5", "Montant estimé<br>&gt; 10 000 € ?", 160, 1045, 220, 90, S_LOSANGE)
+s.box("t5", "<b>ESCALADE gestionnaire</b> · règle 5<br>motif : seuil de délégation dépassé", 480, 1060, 340, 60, FIN_ESC)
+s.box("t6", "<b>DÉCISION : ACCEPTÉE</b> · règle 6<br>montant remboursé = montant estimé", 120, 1175, 300, 60, FIN_REF)
 
 s.box("bornes", "<b>Bornes provisoires</b><br>vérifiées par la Coordination avant chaque délégation<br><br>"
                 "• Durée par demande : <b>10 s</b> (engagement de service, spec § 12)<br>"
@@ -173,39 +172,38 @@ s.box("comp", "<b>Pourquoi le complément après l'éligibilité ?</b><br>"
               "inutile de solliciter l'assuré. La Coordination décide le complément ; Pièces l'adresse.",
       1240, 640, 400, 100, S_NOTE)
 
-s.edge("a1", "s0", "e", E_DELEG, "délègue", [(270, 165), (165, 165)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a2", "s0", "p", E_DELEG, "délègue", [(270, 165), (415, 165)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a3", "e", "r1", E_DEP, "", [(165, 285), (270, 285)], sortie=(0.5, 1), entree=(0.5, 0))
-s.edge("a4", "p", "r1", E_DEP, "", [(415, 285), (270, 285)], sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("a1", "s0", "e", E_DELEG, "délègue", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("a3", "e", "r1", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b1", "r1", "t1", E_OK, "non", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("b2", "r1", "r2", E_DEP, "oui", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b2", "r1", "p", E_DELEG, "oui : délègue", sortie=(0.5, 1), entree=(0.5, 0))
+s.edge("b2b", "p", "r2", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b3", "r2", "c", E_DEP, "non", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("b4", "c", "r2", E_DEP, "nouveau dépôt", [(650, 530), (330, 530)], sortie=(0.5, 1), entree=(0.77, 0.9))
+s.edge("b4", "c", "r2", E_DEP, "nouveau dépôt", [(650, 565), (330, 565)], sortie=(0.5, 1), entree=(0.77, 0.9))
 s.edge("b5", "c", "t2", E_ESC, "aucun dépôt du type", sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("b6", "r2", "est", E_DEP, "oui", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b7", "est", "r3", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b8", "r3", "t3", E_OK, "oui", sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("b9", "r3", "r4", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b10", "r4", "pa", E_EXT, "oui", sortie=(1, 0.5), entree=(0, 0.5))
-s.edge("b11", "pa", "t4a", E_ESC, "modéré", [(850, 815), (850, 773)], sortie=(1, 0.33), entree=(0, 0.5))
+s.edge("b11", "pa", "t4a", E_ESC, "modéré", [(850, 850), (850, 808)], sortie=(1, 0.33), entree=(0, 0.5))
 s.edge("b12", "pa", "t4b", E_ESC, "élevé", sortie=(1, 0.75), entree=(0, 0.5))
 s.edge("b13", "pa", "deg", E_EXT, "indisponible", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b14", "deg", "t4c", E_ESC, "> 1 500 €", sortie=(1, 0.5), entree=(0, 0.5))
 # point de jonction sur l'axe : la demande poursuit vers la règle 5
-s.box("j", "", 264, 974, 12, 12, "ellipse;fillColor=#333333;strokeColor=#333333;")
-s.edge("b15", "deg", "j", E_EXT, "", [(650, 980)], sortie=(0.5, 1), entree=(1, 0.5))
-s.edge("b16", "pa", "j", E_EXT, "", [(440, 846), (440, 980)], sortie=(0, 0.85), entree=(1, 0.5))
+s.box("j", "", 264, 1009, 12, 12, "ellipse;fillColor=#333333;strokeColor=#333333;")
+s.edge("b15", "deg", "j", E_EXT, "", [(650, 1015)], sortie=(0.5, 1), entree=(1, 0.5))
+s.edge("b16", "pa", "j", E_EXT, "", [(440, 881), (440, 1015)], sortie=(0, 0.85), entree=(1, 0.5))
 LIB = "text;html=1;fontFamily=Arial;fontSize=11;fontColor=#555555;align=center;verticalAlign=middle;whiteSpace=wrap;"
-s.box("lb16", "faible : poursuit", 300, 900, 130, 20, LIB)
-s.box("lb15", "≤ 1 500 € : continue, marquée mode dégradé", 470, 986, 350, 18, LIB)
+s.box("lb16", "faible : poursuit", 300, 935, 130, 20, LIB)
+s.box("lb15", "≤ 1 500 € : continue, marquée mode dégradé", 470, 1021, 350, 18, LIB)
 s.edge("b17", "r4", "j", E_DEP, "non", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b17b", "j", "r5", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("b18", "r5", "t5", E_ESC, "oui", sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("b19", "r5", "t6", E_OK, "non", sortie=(0.5, 1), entree=(0.5, 0))
 
 s.legende([(VERT, "Règle de la Coordination"), (BLEU, "Contrôle délégué"), (OK, "Fin : décision"),
-           (ESC, "Fin : escalade"), (GRIS, "Chantier 2"), (ORANGE, "Bornes provisoires")], 30, 1240)
-s.ecrire("schema-2-orchestration", "Orchestration et terminaison", 1670, 1290)
+           (ESC, "Fin : escalade"), (GRIS, "Chantier 2"), (ORANGE, "Bornes provisoires")], 30, 1275)
+s.ecrire("schema-2-orchestration", "Orchestration et terminaison", 1670, 1325)
 
 # =============================================================================================================
 # Schéma 3 : la mémoire partagée de la demande
@@ -291,25 +289,27 @@ arbre_de_decision(
         ("q5", "<b>Q5</b> : quelles métriques par agent faut-il rendre visibles ?", S_QTECH),
     ],
     cotes=[
-        ("r0", "<b>Écarté</b> : confier une règle à un LLM. Éligibilité, pièces, montant, indicateurs et décision sont chiffrés "
-               "(§ 4 à § 10) : ils restent en code. L'avis de fraude vient du partenaire, un agent externe.", S_ECARTE, "écarte"),
+        ("r0", "<b>Retenu</b> : deux agents de lecture (modèle, schéma strict) pour le contrat et les pièces. "
+               "<b>Écarté</b> : confier une règle chiffrée à un LLM ; éligibilité, pièces, montant, indicateurs et "
+               "décision restent en code (§ 4 à § 10).", S_RETENU, "retient"),
         ("r1", "<b>Écarté</b> : l'agent unique. Ses rôles ne peuvent pas être prouvés séparément ; la trace exige un agent par section.",
          S_ECARTE, "écarte"),
         ("r2", "<b>Écarté</b> : un planificateur LLM qui invente les étapes. Le parcours est fixé par la spec (§ 2), "
                "testable et bornable.", S_ECARTE, "écarte"),
-        ("r3", "<b>Retenu</b> : éligibilité et vérification des pièces en parallèle ; la demande de complément seulement "
-               "si la demande est éligible.", S_RETENU, "retient"),
+        ("r3", "<b>Retenu</b> : contrôles en séquence, dans l'ordre de la spec, arrêt dès qu'une règle conclut ; "
+               "les demandes d'un lot en parallèle (§ 12).", S_RETENU, "retient"),
         ("r4", "<b>Écarté</b> : des agents qui se passent la main sans contrôle central ; personne ne garantirait l'issue "
                "de chaque demande, ni les 10 s.", S_ECARTE, "écarte"),
         ("r5", "<b>Ajouté</b> : une trace à chaque étape (agent, sections écrites), source des métriques par agent.",
          S_RETENU, "ajoute"),
     ],
-    reponses=["en partie : les règles sont chiffrées, l'avis de fraude est externe", "non",
-              "oui : éligibilité et pièces, estimation, anti-fraude, issue (§ 2)", "oui : éligibilité et pièces", "oui",
+    reponses=["en partie : règles chiffrées, avis externe, mais des documents à lire", "non",
+              "oui : éligibilité et pièces, estimation, anti-fraude, issue (§ 2)",
+              "dans une demande, non utile (0,01 ms par contrôle) ; entre demandes, oui", "oui",
               "appels, échecs, latence, appels externes (interface.md)"],
-    final="<b>Pattern retenu</b> : une Coordination centrale en code (pattern superviseur) qui applique les règles de décision, "
-          "et quatre agents de contrôle, chacun maître d'une seule section · éligibilité et pièces en parallèle · "
-          "un seul appel au partenaire par demande · une trace à chaque étape",
+    final="<b>Pattern retenu</b> : une Coordination centrale en code (pattern superviseur), seule à conclure · quatre "
+          "contrôles déterministes, chacun maître d'une seule section, en séquence avec court-circuit · deux agents de "
+          "lecture en amont (phase E) · un seul appel au partenaire · une trace à chaque étape",
     tension="<b>Tension à arbitrer</b> : le code est prévisible mais rigide ; un système tout agentique est souple mais "
             "difficile à garantir. Ici chaque règle est chiffrée et les engagements sont absolus (issue garantie, 10 s) : "
             "un squelette en code, l'avis externe venant du partenaire.",
@@ -322,31 +322,33 @@ arbre_de_decision(
 # =============================================================================================================
 s = Schema()
 s.box("t", "Kaldera V2 · Architecture générale · Chantier 1", 30, 20, 1000, 30, S_TITRE)
-s.box("st", "Une seule vue : l'entrée, la Coordination, les quatre agents de contrôle, la mémoire partagée de la demande, "
-            "les échanges avec l'extérieur et les deux issues possibles. Fondé sur specs_metier.md (v3.2) et interface.md.",
+s.box("st", "Une seule vue : l'entrée, la Coordination, les quatre contrôles déterministes, la mémoire partagée de la demande, "
+            "les échanges avec l'extérieur et les deux issues possibles. Mis à jour le 08/10/2026 : contrôles en séquence, "
+            "lecture des pièces en amont (schéma E).",
       30, 54, 1500, 22, S_SOUS)
 
-s.box("lot", "<b>Entrée : traiter_lot</b><br>Chaque demande reçoit son propre état et ses 10 s ; "
-             "les demandes d'un lot sont traitées en concurrence (§ 12).",
+s.box("lot", "<b>Entrée</b> : une demande JSON, ou un dossier lu par les deux agents de lecture (schéma E). "
+             "Chaque demande a son état et ses 10 s ; un lot est traité en parallèle (§ 12).",
       30, 100, 250, 100, S_NOTE)
 s.box("coord", "<b>Coordination</b> (code, sans LLM) · <b>seule à lire et à écrire la mémoire</b><br>"
                "Appelle chaque agent avec ses entrées, reçoit son résultat et le range ; vérifie les bornes avant chaque délégation (8 étapes, 10 s, 2 compléments), "
-               "applique les règles de décision du § 10 dans l'ordre et conclut. Les agents ne s'appellent jamais entre eux.",
+               "lance les contrôles dans l'ordre (1 à 4), arrête dès qu'une règle du § 10 conclut, et conclut seule. "
+               "Les agents ne s'appellent jamais entre eux.",
       400, 100, 1010, 80, S_ORCH)
 
 s.box("grp", "", 320, 210, 1100, 200, S_GROUPE)
-s.box("contrat", "<b>Agents de contrôle</b> (cadre bleu) : un contrat fixe, entrée, sortie, erreurs. Réalisés en code aujourd'hui ; "
-                 "un agent peut passer au LLM sans toucher à la Coordination ni à la mémoire.",
+s.box("contrat", "<b>Contrôles déterministes</b> (cadre bleu) : un contrat fixe, entrée, sortie, erreurs. Réalisés en code ; "
+                 "la réalisation peut changer sans toucher à la Coordination ni à la mémoire.",
       1460, 395, 170, 165, S_NOTE)
 agents = [
-    ("ap", "<b>Pièces justificatives</b> · <b>section : pieces</b><br>Présence, lisibilité, type attendu ; "
-           "adresse le complément confié par la Coordination.<br><i>Règles simples. En production, lire une facture "
-           "scannée : le cas le plus solide pour un LLM.</i>", 335),
-    ("ae", "<b>Éligibilité</b> · <b>section : eligibilite</b><br>E1 contrat actif, E2 cotisations, E3 carence 30 j, "
-           "E4 délai de déclaration, E5 garantie.<br><i>Règles simples : un statut, une date, une liste.</i>", 605),
-    ("aes", "<b>Estimation</b> · <b>section : estimation</b><br>Montant justifié, retenu, estimé ; franchise ; "
+    ("ae", "<b>1 · Éligibilité</b> · <b>section : eligibilite</b><br>E1 contrat actif, E2 cotisations, E3 carence 30 j, "
+           "E4 délai de déclaration, E5 garantie.<br><i>Règles simples : un statut, une date, une liste.</i>", 335),
+    ("ap", "<b>2 · Pièces justificatives</b> · <b>section : pieces</b><br>Présence, lisibilité, type attendu ; "
+           "adresse le complément confié par la Coordination.<br><i>La lecture des images est faite en amont, par "
+           "le lecteur de pièces.</i>", 605),
+    ("aes", "<b>3 · Estimation</b> · <b>section : estimation</b><br>Montant justifié, retenu, estimé ; franchise ; "
             "plafond de la formule.<br><i>Calcul : jamais confié à un LLM.</i>", 875),
-    ("af", "<b>Anti-fraude</b> · <b>section : avis_fraude</b><br>Indicateurs F1 à F4 ; un seul appel au partenaire ; "
+    ("af", "<b>4 · Anti-fraude</b> · <b>section : avis_fraude</b><br>Indicateurs F1 à F4 ; un seul appel au partenaire ; "
            "contrôle de sa réponse.<br><i>Seuils en code ; le jugement vient du partenaire.</i>", 1145),
 ]
 for aid, texte, x in agents:
@@ -356,8 +358,8 @@ for aid, texte, x in agents:
 
 s.box("mem", "Mémoire partagée de la demande : un objet par demande ; seule la Coordination la lit et l'écrit ; chaque section reçoit le résultat d'un seul agent",
       320, 450, 1100, 250, S_CONTENEUR + "verticalAlign=bottom;spacingBottom=6;align=right;spacingRight=12;")
-for sid, texte, x in [("spieces", "<b>pieces</b><br>résultat de Pièces, après chaque dépôt", 335),
-                      ("selig", "<b>eligibilite</b><br>résultat d'Éligibilité", 605),
+for sid, texte, x in [("selig", "<b>eligibilite</b><br>résultat d'Éligibilité", 335),
+                      ("spieces", "<b>pieces</b><br>résultat de Pièces, après chaque dépôt", 605),
                       ("sestim", "<b>estimation</b><br>résultat d'Estimation", 875),
                       ("sfraude", "<b>avis_fraude</b><br>résultat d'Anti-fraude", 1145)]:
     s.box(sid, texte, x, 490, 260, 60, S_AGENT + CENTRE)
@@ -370,7 +372,7 @@ s.edge("wcoord", "coord", "mem", E_DEP, "", [(305, 164), (305, 525)], sortie=(0,
 s.edge("e0", "lot", "coord", E_DEP, "une demande", sortie=(1, 0.4), entree=(0, 0.4))
 s.box("espace", "<b>Espace assuré</b><br>reçoit la demande de complément ; renvoie les dépôts de l'assuré (§ 5)",
       30, 250, 240, 95, S_EXT)
-s.edge("x0", "ap", "espace", E_EXT, "complément", sortie=(0, 0.35), entree=(1, 0.5))
+s.edge("x0", "ap", "espace", E_EXT, "complément", [(657, 232), (285, 232), (285, 297)], sortie=(0.2, 0), entree=(1, 0.5))
 s.box("part", "<b>Partenaire anti-fraude</b><br>agent externe, A2A<br>7 champs filtrés, 1 appel, abandon à 3 s<br>(chantier 2)",
       1460, 250, 170, 120, S_EXT)
 s.edge("x1", "af", "part", E_EXT, "", sortie=(1, 0.35), entree=(0, 0.45))
@@ -392,7 +394,7 @@ s.box("pourquoi", "<b>Pourquoi des agents, si les contrôles sont des règles ?<
                   "• Chaque agent rend un service sans montrer ses règles : si la carence passe de 30 à 45 jours, "
                   "seul l'agent Éligibilité change.<br>"
                   "• Une section, un propriétaire : la frontière se prouve dans la trace [E2].<br>"
-                  "• Le contrat reste le même si la réalisation passe du code au LLM.",
+                  "• Le modèle ne sert qu'à lire les documents (agents de lecture) ; aucune règle ne lui est confiée.",
       30, 375, 260, 215, S_AMBIG)
 s.box("comm", "<b>Comment ils communiquent</b><br>Aucun agent ne lit la mémoire. Agents internes : fonctions appelées par la Coordination, "
               "dans le même processus. Partenaire : A2A, par le réseau. Un contrôle tenu par un autre service passerait "

@@ -45,7 +45,8 @@ s.box("gp", "Lecteur de pièces · lecteurs.lire_piece · reçoit une image et s
 s.box("p1", "<b>1 · Code</b><br>netteté de l'image (moyenne des contours) ; seuil 3,5, mesuré sur les 68 images",
       380, 355, 230, 95, S_ORCH)
 s.box("dnet", "Nette ?", 640, 350, 170, 105, S_LOSANGE)
-s.box("p_flou", "<b>illisible</b><br>sans appel au modèle", 640, 485, 170, 70, S_NOTE)
+s.box("p_flou", "<b>illisible</b><br>sans appel au modèle ; aussi une image qui ne s'ouvre pas", 640, 485, 170, 90,
+      S_NOTE)
 s.box("dtype", "Facture ?", 840, 350, 170, 105, S_LOSANGE)
 s.box("p_autre", "photo, dépôt de plainte :<br><b>lisible</b> (contenu non vérifié)", 840, 485, 170, 85, S_NOTE)
 s.box("p2", "<b>2 · Modèle</b><br>l'image et la phrase de garde → schéma strict <b>FactureLue</b> : lisible, "
@@ -74,8 +75,13 @@ s.box("chaine", "<b>Chaîne du chantier 1, inchangée</b><br>coordination.traite
                 "Anti-fraude, règles § 10, fiche de décision", 1280, 735, 290, 105, S_ORCH)
 s.edge("gpan", "gp", "panne", E_ESC, "lecture impossible (contrat ou facture)", sortie=(0.15, 1), entree=(0.3232, 0))
 s.edge("gjs", "gp", "json", E_DEP, "contrat, pièces et dépôts lus", sortie=(0.5496, 1), entree=(0.25, 0))
-s.edge("form", "dos", "json", E_DEP, "formulaire (declaration.json)", [(180, 875), (1100, 875)], sortie=(0.5, 1),
+s.edge("form", "dos", "json", E_DEP, "formulaire (declaration.json)", [(315, 875), (1100, 875)], sortie=(0.95, 1),
        entree=(0.5, 1))
+# --- contrôles d'entrée, avant toute lecture (exigence N1, ajoutés le 08/10/2026) ---
+s.box("entree", "<b>Avant toute lecture : escalade gestionnaire</b> motivée si le formulaire est absent ou illisible, "
+                "le contrat absent, corrompu ou sans texte, ou un fichier non reconnu. Jamais d'erreur brute.",
+      30, 735, 270, 105, S_FIN_ESC)
+s.edge("dent", "dos", "entree", E_ESC, "", sortie=(0.4, 1), entree=(0.44, 0))
 s.edge("jch", "json", "chaine", E_DEP, "", sortie=(1, 0.5), entree=(0, 0.5))
 
 # --- garde-fous et mesure ---
@@ -85,7 +91,8 @@ s.box("garde", "<b>Garde-fous</b><br>• Le texte d'un document est une donnée,
                "appel au modèle), avant les 10 s de la chaîne de décision.", 30, 900, 760, 110, S_NOTE)
 s.box("mesure", "<b>Mesure E4</b> (08/10/2026, 34 dossiers, gpt-5.4)<br>100 % sur chaque champ (5 du contrat, "
                 "33 montants, 68 lisibilités) · 34/34 décisions identiques au chemin JSON · 0 lecture impossible · "
-                "67 appels en 25,1 s (6 en parallèle) · facture : moyenne 2,35 s, max 6,46 s.<br>"
+                "67 appels en 24,8 s (6 dossiers lus à la fois) · facture : moyenne 2,38 s, max 5,89 s · 32 180 jetons "
+                "en entrée, 2 480 en sortie.<br>"
                 "<i>Limites : documents de synthèse et propres ; 2 images illisibles seulement, attrapées par le code ; "
                 "le contenu des photos n'est pas vérifié.</i>", 810, 900, 760, 110, S_AMBIG)
 
