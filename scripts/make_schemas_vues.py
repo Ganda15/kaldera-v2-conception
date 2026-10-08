@@ -268,10 +268,10 @@ s.box("totaux", "<b>Les 28 scénarios (34 demandes) : attendu, et mesuré le 08/
                 "16 acceptées · 7 refusées · 5 escalades gestionnaire (dont BCL-01) · 6 escalades cellule_fraude<br>"
                 "11 en mode dégradé · 1 borne atteinte · 18 appels au partenaire, jamais deux par dossier · "
                 "11 échecs de l'agent antifraude", 30, 800, 900, 120, S_ORCH)
-s.box("ligne", "<b>Une ligne réelle du journal (entrée 7, sur 7 consignées)</b><br>"
-               "étape 2.2 → avec un budget unique, il peut rester trop peu de temps pour l'appel → délai du "
-               "partenaire = min(3 s, temps restant), aucun appel sous 0,1 s → rejeu : 56/56, tests verts → "
-               "commit 20d023b.", 950, 800, 900, 120, S_NOTE)
+s.box("ligne", "<b>Une ligne réelle du journal (entrée 8, sur 8 consignées)</b><br>"
+               "mesure des bornes → l'appel réussi le plus long dure 0,104 s : le seuil de 0,1 s était trop court → "
+               "seuil porté à 0,15 s, réserve de la fiche de 0,5 à 0,4 s (38 ms de dépassement mesuré) → rejeu : "
+               "56/56, 342 tests verts → commit.", 950, 800, 900, 120, S_NOTE)
 
 s.legende([(VERT, "Étape de contrôle"), (ORANGE, "Ajustement du chantier 1"), (BLEU, "Scénario ou test"),
            (GRIS, "Partenaire simulé")], 30, 945)

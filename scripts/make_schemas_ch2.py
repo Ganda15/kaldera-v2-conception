@@ -74,7 +74,7 @@ s.box("af", "<b>Agent Anti-fraude</b> · section avis_fraude<br>reçoit 8 donné
             "<b>Aucun indicateur</b> : avis non requis, aucun appel, jamais marqué mode dégradé", 380, 130, 280, 95, S_AGENT)
 s.box("coord", "<b>Coordination</b><br>seule à lire et écrire l'état ; donne à l'agent un accès au partenaire limité au "
                "temps restant ; registre des appels : une référence, un appel par exécution", 720, 130, 290, 110, S_ORCH)
-s.box("d0", "Délai du partenaire<br>≥ 0,1 s ?", 420, 255, 200, 95, S_LOSANGE)
+s.box("d0", "Délai du partenaire<br>≥ 0,15 s ?", 420, 255, 200, 95, S_LOSANGE)
 s.box("filtre", "<b>Filtre sortant [E3]</b><br>message neuf : les sept champs du contrat, dont deux calculés "
                 "(ancienneté, département) ; schéma strict", 380, 375, 280, 110, S_ORCH)
 s.box("appel", "<b>Appel unique</b> · POST /a2a, message/send<br>Bearer PARTENAIRE_JETON<br>"
@@ -101,9 +101,9 @@ s.box("cont", "<b>La demande continue</b> sans avis<br>règles 5 et 6 · marqué
 s.box("journal", "<b>Trace</b>, écrite par la Coordination<br>agent, action, durée, statut, appel externe, raison d'une "
                  "indisponibilité (delai_depasse, schema, http_503…) ; jamais le message, le jeton ni le contenu d'une "
                  "réponse écartée", 60, 330, 260, 150, S_CYL)
-s.box("budget", "<b>Échéance de la demande</b><br>arrivée + 10 s − 0,5 s de réserve pour la fiche (déduite une seule "
+s.box("budget", "<b>Échéance de la demande</b><br>arrivée + 10 s − 0,4 s de réserve pour la fiche (déduite une seule "
                 "fois).<br>Délai du partenaire = min(3 s, échéance − maintenant).<br><i>Exemple : contrôles finis à 8 s, "
-                "il reste 1,5 s : le partenaire reçoit 1,5 s, pas 3 s (schéma 7).</i>", 60, 505, 225, 190, S_NOTE)
+                "il reste 1,6 s : le partenaire reçoit 1,6 s, pas 3 s (schéma 7). Réserve et seuil de 0,15 s tirés de la mesure.</i>", 60, 505, 225, 190, S_NOTE)
 s.box("esc", "<b>ESCALADE cellule_fraude</b><br>contrôle anti-fraude manuel · mode dégradé", 60, 850, 260, 70, FIN_ESC)
 s.box("note", "Jamais de relance (contrat § 6). Doublon dans une même exécution (demande ou lot) : bloqué par le "
               "registre, aucun appel. Après un redémarrage : non couvert (limite écrite) ; le partenaire répond -32029, "
@@ -211,8 +211,8 @@ s.box("titre2", "<b>Tests ciblés du chantier 2</b>, hors scénarios : ils prouv
 colonnes2 = [("Test", 250), ("Où", 170), ("Attendu", 410), ("Mesuré le 08/10", 480)]
 lignes2 = [
     ("Temps restant réduit", "intégration, unitaire",
-     "le partenaire reçoit min(3 s, temps restant) ; sous 0,1 s, aucun appel ; l'issue tient dans le budget",
-     "budget de 2 s : issue en 1,52 s, 1 appel ; sous 0,1 s : 0 appel, 950 € accepté en mode dégradé, 6 900 € vers "
+     "le partenaire reçoit min(3 s, temps restant) ; sous 0,15 s, aucun appel ; l'issue tient dans le budget",
+     "budget de 2 s : issue en 1,52 s, 1 appel ; sous 0,15 s : 0 appel, 950 € accepté en mode dégradé, 6 900 € vers "
      "cellule_fraude"),
     ("Requête refusée par le filtre", "intégration, unitaire",
      "aucun appel réseau ; avis indisponible, raison requete_non_conforme",
@@ -247,15 +247,15 @@ s.box("st", "Une seule échéance par demande, posée à l'arrivée du dossier. 
 PX = 120  # pixels par seconde
 s.box("seg1", "<b>Lecture des pièces</b>, puis Éligibilité, Pièces et Estimation", 60, 100, 8 * PX, 60,
       S_ORCH + CENTRE)
-s.box("seg2", "<b>Partenaire</b><br>1,5 s au plus", 60 + 8 * PX, 100, int(1.5 * PX), 60, S_EXT + CENTRE)
-s.box("seg3", "fiche", 60 + int(9.5 * PX), 100, int(0.5 * PX), 60, S_AMBIG + CENTRE + "fontSize=10;")
+s.box("seg2", "<b>Partenaire</b><br>1,6 s au plus", 60 + 8 * PX, 100, int(1.6 * PX), 60, S_EXT + CENTRE)
+s.box("seg3", "fiche", 60 + int(9.6 * PX), 100, int(0.4 * PX), 60, S_AMBIG + CENTRE + "fontSize=10;")
 TICK = "text;html=1;fontFamily=Arial;fontSize=11;fontColor=#555555;align=center;verticalAlign=top;"
-for libelle, sec in [("0 s", 0), ("8 s", 8), ("9,5 s", 9.5), ("10 s", 10)]:
+for libelle, sec in [("0 s", 0), ("8 s", 8), ("9,6 s", 9.6), ("10 s", 10)]:
     s.box(f"tk{sec}", libelle, 60 + int(sec * PX) - 30, 165, 60, 20, TICK)
-s.box("explic", "<b>0 s</b> : le dossier arrive ; échéance = 10 s − 0,5 s de réserve pour la fiche, soit 9,5 s.<br>"
+s.box("explic", "<b>0 s</b> : le dossier arrive ; échéance = 10 s − 0,4 s de réserve pour la fiche, soit 9,6 s.<br>"
                 "<b>8 s</b> : lecture et contrôles finis ; un indicateur F1 à F4 demande l'avis du partenaire.<br>"
-                "<b>8 à 9,5 s</b> : le partenaire reçoit min(3 s, 9,5 − 8) = 1,5 s, et non 3 s.<br>"
-                "<b>9,5 à 10 s</b> : la Coordination produit la fiche, avec l'avis conforme ou le repli prévu.",
+                "<b>8 à 9,6 s</b> : le partenaire reçoit min(3 s, 9,6 − 8) = 1,6 s, et non 3 s.<br>"
+                "<b>9,6 à 10 s</b> : la Coordination produit la fiche, avec l'avis conforme ou le repli prévu (réserve de 0,4 s, tirée de la mesure).",
       60, 200, 1200, 95, S_NOTE)
 
 s.box("g_titre", "Repli 1 · chantier 1", 60, 320, 560, 30, S_SOUS + "fontStyle=1;")
