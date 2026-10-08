@@ -99,7 +99,7 @@ s.box("coord", f"<b>Coordination · superviseur</b> (code, sans LLM) {e(1, 2, 6)
                "dans l'ordre, conclut. Ne refait jamais un contrôle.", 300, 135, 560, 125, S_ORCH)
 s.box("bornes", f"<b>Bornes</b> {e(1, 6)}, vérifiées avant chaque appel<br>"
                 "• 10 s par demande, lecture comprise (§ 12)<br>• 8 étapes, la dernière réservée à l'issue<br>• 2 demandes de complément<br>"
-                "• même état vu deux fois : arrêt<br>• 1 appel au partenaire, abandon à 3 s<br>• contrôle interne : objectif 1 s",
+                "• même état vu deux fois : arrêt<br>• 1 appel au partenaire : au plus 3 s, dans le temps restant<br>• contrôle interne : objectif 1 s",
       880, 135, 280, 150, S_AMBIG)
 
 s.box("par", "Dans l'ordre, 1 à 4 : chacun seulement si le précédent n'a pas conclu", 50, 290, 1120, 230, S_GROUPE + "verticalAlign=bottom;spacingBottom=2;")
@@ -130,7 +130,7 @@ SEC_N = BASE + GAUCHE + "rounded=0;fillColor=#ffffff;strokeColor=#999999;fontSiz
 SEC = [("s_dem", "<b>demande</b> : reçue, lecture seule", None),
        ("s_eli", "<b>eligibilite</b> : résultat d'Éligibilité", None), ("s_pie", "<b>pieces</b> : résultat de Pièces", None),
        ("s_est", "<b>estimation</b> : résultat d'Estimation", None), ("s_avi", "<b>avis_fraude</b> : résultat d'Anti-fraude", None),
-       ("s_iss", "<b>issue</b> : écrite par la Coordination", "orch"), ("s_ctl", "<b>controle</b> : bornes, marqueur, arret", "orch"),
+       ("s_iss", "<b>issue</b> : écrite par la Coordination", "orch"),
        ("s_tra", "<b>trace</b> : une ligne par étape (agent, ecrit)", "orch")]
 SEC_A = BASE + GAUCHE + MILIEU + f"rounded=0;fillColor=#cfe2f3;strokeColor={BLEU};fontSize=11;"
 SEC_O = BASE + GAUCHE + MILIEU + f"rounded=0;fillColor=#d9ead3;strokeColor={VERT};fontSize=11;"
@@ -161,19 +161,19 @@ s.box("fiche", "<b>Fiche de décision</b> (§ 11) : issue, montant, motif, file,
 s.box("filtre", f"<b>Filtre sortant</b> {e(3)}<br>Message neuf construit depuis une liste blanche : exactement 7 champs, "
                 "dont 2 calculés (ancienneté, département). Validé contre un schéma strict ; en cas d'échec, rien ne part.",
       1215, 135, 395, 120, S_ORCH)
-s.box("appel", f"<b>Appel unique</b> {e(5)}<br>message/send, jeton Bearer ; marqueur d'appel écrit avant par la "
-               "Coordination ; abandon à 3 s ; aucune relance (contrat § 6).", 1215, 285, 395, 110, S_ORCH)
+s.box("appel", f"<b>Appel unique</b> {e(5)}<br>message/send, jeton Bearer ; délai = min(3 s, temps restant de la demande) ; "
+               "registre des appels (une exécution) ; aucune relance (contrat § 6).", 1215, 285, 395, 110, S_ORCH)
 s.box("valid", f"<b>Validation de la réponse</b> {e(4)}, cinq niveaux<br>1 · transport · 2 · enveloppe JSON-RPC · "
-               "3 · forme A2A (tâche terminée) · 4 · schéma (6 champs) · 5 · cohérence (même dossier, score de 0 à 1, "
-               "niveau cohérent)<br>Au premier échec : réponse écartée, seule la raison est gardée.",
+               "3 · forme A2A (tâche terminée) · 4 · schéma (6 champs, score de 0 à 1) · 5 · cohérence (même dossier, "
+               "niveau cohérent)<br>Au premier échec : réponse écartée ; seule la raison, un code court, va dans la trace.",
       1215, 425, 395, 160, S_ORCH)
-s.box("dv", "Avis conforme<br>et reçu en 3 s ?", 1322, 605, 180, 85, S_LOSANGE)
-s.box("retenu", "<b>Avis retenu</b><br>rangé dans avis_fraude ; règle 4 : faible poursuit, modéré gestionnaire, "
+s.box("dv", "Avis conforme reçu<br>avant l'échéance ?", 1322, 605, 180, 85, S_LOSANGE)
+s.box("retenu", "<b>Avis retenu</b><br>fiche : niveau et score ; règle 4 : faible poursuit, modéré gestionnaire, "
                 "élevé cellule_fraude", 1215, 720, 190, 110, S_FIN_OK)
-s.box("degr", f"<b>Mode dégradé (§ 9)</b> {e(5)}<br>avis indisponible (délai, erreur, réponse écartée) :<br>"
+s.box("degr", f"<b>Mode dégradé (§ 9)</b> {e(5)}<br>avis indisponible (budget, filtre, délai, erreur, réponse écartée) :<br>"
               "• 1 500 € ou moins : la demande poursuit, marquée<br>• au-delà : escalade cellule_fraude<br>"
               "Les demandes sans indicateur ne sont jamais touchées.", 1420, 720, 195, 195, S_AMBIG)
-s.box("tard", "Réponse tardive : jamais lue ; jamais de rappel (doublon -32029).", 1215, 845, 190, 70, S_NOTE)
+s.box("tard", "Réponse tardive : jamais lue. Doublon : registre (une exécution), sinon -32029 = erreur.", 1215, 845, 190, 70, S_NOTE)
 s.edge("f_oui", "fF", "filtre", E_DEP, "oui", [(1185, 590), (1185, 195)], sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("x1", "filtre", "appel", E_DEP, "7 champs", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("x2", "valid", "dv", E_DEP, "", sortie=(0.5, 1), entree=(0.5, 0))
@@ -187,15 +187,15 @@ s.box("part", "<b>Partenaire anti-fraude</b><br>agent A2A d'une autre entreprise
 s.box("tache", "<b>Tâche A2A</b><br>état completed ; artefact data de 6 champs : référence, score, niveau, indicateurs, "
                "evaluation_id, version du modèle ; renvoyée, ou une erreur, à la validation", 1670, 440, 290, 120, S_EXT)
 s.box("cv2", "<b>Contrat d'échange v2.0</b><br>• requête : 7 champs exactement<br>• réponse : 6 champs<br>"
-             "• réponse garantie en 2 s ; abandon à 3 s<br>• un appel par dossier, aucune relance<br>"
+             "• réponse garantie en 2 s ; abandon au plus tard à 3 s<br>• un appel par dossier, aucune relance<br>"
              "• erreurs : 401, 503, -32700, -32600, -32601, -32602, -32029", 1670, 600, 290, 200, S_NOTE)
 s.edge("y1", "appel", "part", E_EXT, "", sortie=(1, 0.5), entree=(0, 0.5))
 s.edge("y2", "part", "tache", E_EXT, "", sortie=(0.5, 1), entree=(0.5, 0))
 s.edge("y3", "tache", "valid", E_EXT, "", sortie=(0, 0.5), entree=(1, 0.5))
 
 # --- bas : preuve, métriques, journal ---
-s.box("preuve", f"<b>Plan de preuve</b> {e(1, 2)}<br>28 scénarios rejoués ; chaque fiche comparée au champ attendu ; "
-                "chaque section remplie par son seul agent (niveau 2)", 30, 950, 600, 90, S_NOTE)
+s.box("preuve", f"<b>Plan de preuve</b> {e(1, 2)}<br>28 scénarios rejoués contre le partenaire simulé : 34/34 conformes, mesuré "
+                "le 08/10 (outils/mesurer_epreuve.py) ; chaque section remplie par son seul agent (niveau 2)", 30, 950, 600, 90, S_NOTE)
 s.box("metr", f"<b>Métriques par agent</b> {e(6)}<br>appels, échecs, latence, appels externes, calculés depuis la trace ; "
               "signaux d'équipe : étapes, bornes atteintes, issues, part en mode dégradé", 650, 950, 600, 90, S_EXT)
 s.box("journal", f"<b>Journal des ajustements</b> {e(6)}<br>chaque changement provoqué par l'épreuve : scénario, signal, "
@@ -228,47 +228,50 @@ for a, b in [("b1", "b2"), ("b2", "b3"), ("b3", "b4"), ("b4", "b5")]:
 s.edge("l_ret", "b5", "b1", E_DEP, "rejeu des 28 scénarios et des tests unitaires, jusqu'à ce que tous les critères tiennent",
        [(1680, 245), (190, 245)], sortie=(0.5, 1), entree=(0.5, 1))
 
-s.box("bouchon", "Partenaire simulé (bouchon)", 30, 280, 330, 300, S_CONTENEUR)
+s.box("bouchon", "Partenaire simulé fourni (external_agent)", 30, 280, 330, 300, S_CONTENEUR)
 for k, (txt) in enumerate(["normal · NOM, AF, BCL", "lent · 5 s, au-delà des 3 s · PAN-02",
                            "invalide · 7 variantes · INV", "panne · PAN-01"]):
     s.box(f"m{k}", txt, 50, 320 + k * 55, 290, 42, S_PILULE)
-s.box("bouchon_n", "Piloté par scripts/partner_ctl.py, absent de l'archive : un bouchon local le remplace.",
+s.box("bouchon_n", "Piloté par /_sim/* et scripts/partner_ctl.py (fournis) ; lancé par la suite d'acceptance et la mesure.",
       50, 540, 290, 35, S_SOUS)
-s.box("rejeux", "<b>Combien de rejeux ?</b><br>Un seul suffit pour juger une issue : aucun LLM et un bouchon déterministe. "
-                "Les scénarios de panne sont rejoués 5 fois pour les durées : c'est la plus lente qui compte face aux 10 s.",
+s.box("rejeux", "<b>Combien de rejeux ?</b><br>Un seul suffit pour juger une issue : aucun LLM dans la décision et un partenaire "
+                "simulé déterministe. Les scénarios de panne sont rejoués 5 fois pour les durées : PAN-02 de 3,021 à "
+                "3,033 s, face aux 10 s.",
       30, 600, 330, 165, S_NOTE)
 
 CARTES = [
     (f"<b>Cas nominaux · NOM-01 à 11</b> {e(1, 2)}", "issue, trace, étapes, appels externes",
-     "11 fiches conformes ; chaque section remplie par son seul agent ; 0 appel au partenaire"),
+     "11 fiches conformes ; chaque section remplie par son seul agent ; 0 appel au partenaire", "11/11, 0 appel"),
     (f"<b>Rangement hors section · test unitaire</b> {e(2)}",
      "la Coordination tente de ranger un résultat dans la section d'un autre agent",
-     "erreur de droits ; aucun agent ne reçoit l'état complet"),
-    (f"<b>Données sensibles · test unitaire</b> {e(3)}", "le message reçu par le bouchon",
-     "exactement 7 champs ; ni nom, ni e-mail, ni IBAN, ni description"),
+     "erreur de droits ; aucun agent ne reçoit l'état complet", "test unitaire vert"),
+    (f"<b>Données sensibles · test unitaire</b> {e(3)}", "le message reçu par le partenaire simulé (son journal)",
+     "exactement 7 champs ; ni nom, ni e-mail, ni IBAN, ni description", "7 champs, aucune donnée personnelle (AF-01 à 07)"),
     (f"<b>Anti-fraude · AF-01 à 07</b> {e(1, 3)}", "appels externes, échecs, message envoyé, avis",
-     "7 appels, 0 échec ; bon niveau et bonne issue (AF-03 : avis faible mais plus de 10 000 €, escalade)"),
+     "7 appels, 0 échec ; bon niveau et bonne issue (AF-03 : avis faible mais plus de 10 000 €, escalade)", "7/7, 7 appels, 0 échec"),
     (f"<b>Réponses invalides · INV-01 à 07</b> {e(4, 5)}", "niveau de rejet et raison, avis, mode dégradé",
-     "chacune écartée à son niveau, rien recopié ; 1 500 € ou moins acceptée en mode dégradé, au-delà cellule_fraude"),
+     "chacune écartée à son niveau, rien recopié ; 1 500 € ou moins acceptée en mode dégradé, au-delà cellule_fraude", "7/7 ; schema ×3, incoherence ×2, non JSON, enveloppe"),
     (f"<b>Partenaire en panne · PAN-01, lot de 5</b> {e(5, 6)}", "appels externes, échecs, issues du lot",
-     "2 appels, 2 échecs, 0 relance ; 0401 et 0405 non touchés"),
+     "2 appels, 2 échecs, 0 relance ; 0401 et 0405 non touchés", "5/5 à chacun des 5 rejeux ; 2 appels, 2 échecs"),
     (f"<b>Partenaire lent · PAN-02, 5 s, lot de 3</b> {e(5, 6)}", "durée de chaque appel, de chaque demande, du lot",
-     "abandon à 3 s ; chaque demande sous 10 s ; lot d'environ 3 s, et non 6"),
+     "abandon à 3 s au plus ; chaque demande sous 10 s ; lot d'environ 3 s, et non 6", "3/3 ; lot de 3,02 à 3,03 s sur 5 rejeux"),
     (f"<b>Piège à boucle · BCL-01</b> {e(1, 6)}", "longueur de la trace, arret",
-     "escalade avec arret ; trace de 8 étapes au plus"),
+     "escalade avec arret ; trace de 8 étapes au plus", "escalade, arret etat_repete, trace de 4 étapes"),
 ]
-for k, (titre, signal, critere) in enumerate(CARTES):
+for k, (titre, signal, critere, mesure) in enumerate(CARTES):
     x = 390 + (k % 4) * 370
     y = 280 + (k // 4) * 255
-    s.box(f"k{k}", f"{titre}<br><br>signal : {signal}<br><br>" + ok("réussite : " + critere), x, y, 355, 235, S_CARTE)
+    s.box(f"k{k}", f"{titre}<br><br>signal : {signal}<br><br>" + ok("attendu : " + critere)
+          + f"<br><br><b>mesuré le 08/10</b> : {mesure}", x, y, 355, 235, S_CARTE)
 
-s.box("totaux", "<b>Chiffres attendus sur les 28 scénarios (34 demandes)</b><br>"
-                "16 acceptées · 7 refusées · 4 escalades gestionnaire · 6 escalades cellule_fraude · "
-                "1 escalade à file non fixée (BCL-01)<br>11 en mode dégradé · 1 borne atteinte · 18 appels au partenaire, "
-                "jamais deux par dossier · 11 échecs de l'agent antifraude", 30, 800, 900, 120, S_ORCH)
-s.box("ligne", "<b>Une ligne du journal (exemple fictif : aucun ajustement n'a été fait à ce jour)</b><br>"
-               "PAN-02 → une demande arrêtée à 10 s rend sa fiche à 10,4 s → duree_max_s abaissée de 10 à 8 s → "
-               "rejeu : 28 sur 28, tests unitaires verts → commit.", 950, 800, 900, 120, S_NOTE)
+s.box("totaux", "<b>Les 28 scénarios (34 demandes) : attendu, et mesuré le 08/10 (34/34 conformes)</b><br>"
+                "16 acceptées · 7 refusées · 5 escalades gestionnaire (dont BCL-01) · 6 escalades cellule_fraude<br>"
+                "11 en mode dégradé · 1 borne atteinte · 18 appels au partenaire, jamais deux par dossier · "
+                "11 échecs de l'agent antifraude", 30, 800, 900, 120, S_ORCH)
+s.box("ligne", "<b>Une ligne réelle du journal (entrée 7, sur 7 consignées)</b><br>"
+               "étape 2.2 → avec un budget unique, il peut rester trop peu de temps pour l'appel → délai du "
+               "partenaire = min(3 s, temps restant), aucun appel sous 0,1 s → rejeu : 56/56, tests verts → "
+               "commit 20d023b.", 950, 800, 900, 120, S_NOTE)
 
 s.legende([(VERT, "Étape de contrôle"), (ORANGE, "Ajustement du chantier 1"), (BLEU, "Scénario ou test"),
            (GRIS, "Partenaire simulé")], 30, 945)

@@ -140,7 +140,7 @@ s.box("r3", "Montant estimé<br>nul ?", 160, 685, 220, 90, S_LOSANGE)
 s.box("t3", "<b>DÉCISION : REFUSÉE</b> · règle 3<br>0 € ; dommage inférieur ou égal à la franchise", 480, 700, 340, 60, FIN_REF)
 
 s.box("r4", "Anti-fraude :<br>un indicateur F1 à F4 ?", 160, 810, 220, 100, S_LOSANGE)
-s.box("pa", "<b>Avis du partenaire</b> (chantier 2)<br>un seul appel, 3 s au plus, aucune relance", 480, 830, 340, 60, S_EXT)
+s.box("pa", "<b>Avis du partenaire</b> (chantier 2)<br>un seul appel, au plus 3 s dans le temps restant, aucune relance", 480, 830, 340, 60, S_EXT)
 s.box("t4a", "<b>ESCALADE gestionnaire</b> · avis modéré<br>motif : contrôle renforcé", 880, 780, 300, 56, FIN_ESC)
 s.box("t4b", "<b>ESCALADE cellule_fraude</b> · avis élevé<br>motif : suspicion de fraude", 880, 850, 300, 56, FIN_ESC)
 s.box("deg", "<b>Avis indisponible : mode dégradé</b> (§ 9)<br>délai dépassé, erreur ou réponse non conforme", 480, 940, 340, 60, S_EXT)
@@ -224,7 +224,7 @@ s.box("af", "<b>Anti-fraude</b><br>reçoit : 8 données, dont le montant justifi
 
 s.box("coord", "<b>Coordination</b><br>seule à lire et à écrire l'état<br><br>1. appelle l'agent avec ses entrées<br>"
                "2. reçoit son résultat<br>3. le range dans la section de cet agent<br>4. décide de l'appel suivant<br><br>"
-               "écrit aussi issue et controle", 440, 100, 170, 470, S_ORCH)
+               "écrit aussi issue et la trace", 440, 100, 170, 470, S_ORCH)
 
 s.box("etat", "État de la demande · reference (KAL-AA-NNNN)", 660, 100, 600, 640, S_CONTENEUR)
 SEC_NEUTRE = BASE + GAUCHE + "rounded=0;fillColor=#ffffff;strokeColor=#999999;fontSize=11;"
@@ -235,16 +235,18 @@ sections = [
     ("eligibilite", "<b>eligibilite</b> · résultat d'Éligibilité<br>éligible, conditions non remplies", SEC_AGENT, 210),
     ("pieces", "<b>pieces</b> · résultat de Pièces, rangé à nouveau après chaque dépôt<br>complet ou manquantes, factures lisibles", SEC_AGENT, 282),
     ("estimation", "<b>estimation</b> · résultat d'Estimation<br>montant justifié, montant estimé", SEC_AGENT, 354),
-    ("avis_fraude", "<b>avis_fraude</b> · résultat d'Anti-fraude<br>non requis, avis (niveau, score, evaluation_id) ou indisponible",
+    ("avis_fraude", "<b>avis_fraude</b> · résultat d'Anti-fraude<br>non requis, avis (niveau, score, evaluation_id) ou indisponible "
+                    "(raison)",
      SEC_AGENT, 426),
     ("issue", "<b>issue</b> · écrite par la Coordination, conclut la demande<br>décision ou escalade, montant, motif, file, mode dégradé",
      SEC_ORCH, 506),
-    ("controle", "<b>controle</b> (hors métier) : compteurs des bornes, marqueur d'appel au partenaire, arret", SEC_ORCH, 584),
-    ("trace", "<b>trace</b> (hors métier), ajout seul : une étape par ligne<br>agent dont le résultat est rangé, section remplie, durée, statut",
-     SEC_ORCH, 648),
+    ("trace", "<b>trace</b> (hors métier), ajout seul : une étape par ligne<br>agent dont le résultat est rangé, section "
+              "remplie, durée, statut, raison d'un avis indisponible", SEC_ORCH, 584),
+    ("hors", "<b>hors de l'état</b> : l'échéance de la demande, le registre des appels (une exécution) ; "
+             "arret est écrit dans la fiche", SEC_NEUTRE, 652),
 ]
 for sid, texte, style, y in sections:
-    s.box(sid, texte, 680, y, 560, 56 if sid not in ("controle",) else 44, style)
+    s.box(sid, texte, 680, y, 560, 56 if sid not in ("hors",) else 44, style)
 
 for k, aid in enumerate(["ae", "ap", "aes", "af"]):
     s.edge(f"io{aid}", "coord", aid, E_DEP + "startArrow=block;startFill=1;", "", sortie=(0, 0.13 + 0.19 * k), entree=(1, 0.5))
@@ -364,7 +366,7 @@ for sid, texte, x in [("selig", "<b>eligibilite</b><br>résultat d'Éligibilité
                       ("sfraude", "<b>avis_fraude</b><br>résultat d'Anti-fraude", 1145)]:
     s.box(sid, texte, x, 490, 260, 60, S_AGENT + CENTRE)
 s.box("sissue", "<b>issue</b><br>décision ou escalade, motif", 335, 590, 260, 70, S_ORCH + CENTRE)
-s.box("sctrl", "<b>controle</b><br>compteurs des bornes, marqueur d'appel, arret", 605, 590, 260, 70, S_ORCH + CENTRE)
+s.box("sctrl", "<b>hors de l'état</b><br>échéance de la demande, registre des appels (une exécution)", 605, 590, 260, 70, S_EXT)
 s.box("sdem", "<b>demande</b><br>données reçues, lecture seule", 875, 590, 260, 70, S_EXT)
 s.box("strace", "<b>trace</b>, ajout seul<br>agent, section remplie, durée, statut", 1145, 590, 260, 70, S_ORCH + CENTRE)
 s.edge("wcoord", "coord", "mem", E_DEP, "", [(305, 164), (305, 525)], sortie=(0, 0.8), entree=(0, 0.3))
@@ -373,7 +375,7 @@ s.edge("e0", "lot", "coord", E_DEP, "une demande", sortie=(1, 0.4), entree=(0, 0
 s.box("espace", "<b>Espace assuré</b><br>reçoit la demande de complément ; renvoie les dépôts de l'assuré (§ 5)",
       30, 250, 240, 95, S_EXT)
 s.edge("x0", "ap", "espace", E_EXT, "complément", [(657, 232), (285, 232), (285, 297)], sortie=(0.2, 0), entree=(1, 0.5))
-s.box("part", "<b>Partenaire anti-fraude</b><br>agent externe, A2A<br>7 champs filtrés, 1 appel, abandon à 3 s<br>(chantier 2)",
+s.box("part", "<b>Partenaire anti-fraude</b><br>agent externe, A2A<br>7 champs filtrés, 1 appel, au plus 3 s dans le temps restant<br>(chantier 2)",
       1460, 250, 170, 120, S_EXT)
 s.edge("x1", "af", "part", E_EXT, "", sortie=(1, 0.35), entree=(0, 0.45))
 s.box("metr", "<b>Métriques par agent</b><br>appels, échecs, latence, appels externes (interface.md)",
