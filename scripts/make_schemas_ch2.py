@@ -230,7 +230,7 @@ y_fin2 = tableau("b", colonnes2, lignes2, y_fin + 60, 52, 3)
 
 s.box("note", "Sur les 28 scénarios (34 demandes) : 34/34 conformes, 18 appels au partenaire, 0 doublon reçu, jamais deux "
               "appels pour un dossier ; aucun ajustement de borne n'a été nécessaire au rejeu final. Le journal des "
-              "ajustements consigne les 7 changements faits pendant la construction. Sources : "
+              "ajustements consigne les 12 changements faits pendant la construction. Sources : "
               "evaluation/epreuve/rapport.md (généré) et tests/integration/test_chemin_public_a2a.py.",
       60, y_fin2 + 20, 1310, 60, S_NOTE + MILIEU)
 s.legende([(VERT, "Étape de contrôle"), (ORANGE, "Ajustement du chantier 1"), (GRIS, "Journal des ajustements")],
