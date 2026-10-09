@@ -129,7 +129,7 @@ s.legende([(VERT, "Code (coordination)"), (CYAN, "Agent avec modèle"), (BLEU, "
            (ORANGE, "Point ambigu tranché"), (ROUGE, "Frontière : interdit"), (OK, "Décision"), (ESC, "Escalade"),
            (GRIS, "Externe ou chantier 2")], 30, YL)
 s.box("lg2", "Trait plein : ordre ou données · pointillé vert : délégation · « section » : celle que remplit le résultat "
-             "de l'agent, rangé par la Coordination · agent avec modèle : le modèle lit ou décrit, sa sortie est validée "
+             "de l'agent, rangé par la Coordination · agent avec modèle : le modèle lit ou interprète, sa sortie est validée "
              "par un schéma strict, le code décide · cadre pointillé : appel lancé à l'arrivée",
       30, YL + 36, 1700, 20, S_SOUS)
 s.ecrire("schema-1-carte-des-agents", "Carte des agents", 1780, YL + 70)
@@ -204,7 +204,7 @@ s.box("comp", "<b>Pourquoi le complément après l'éligibilité ?</b><br>"
 s.box("pcoh", "<b>Pourquoi la cohérence à cet endroit ?</b><br>"
               "Après un contrôle des pièces complet : une pièce manquante suit d'abord le complément. Après l'Éligibilité : "
               "un refus du § 4 reste prioritaire. Avant l'Estimation : on ne chiffre pas des pièces qui contredisent la "
-              "déclaration. Le modèle décrit, le code rend le verdict ; aucune issue de la cohérence n'est une décision. "
+              "déclaration. Le modèle interprète chaque pièce et dit si elle concorde ; le code vérifie les écarts et rend le verdict ; aucune issue de la cohérence n'est une décision. "
               "Sur le chemin JSON, l'étape n'existe pas.",
       1240, 780, 400, 150, S_NOTE)
 
@@ -357,7 +357,7 @@ arbre_de_decision(
               "appels, échecs, latence, appels externes (interface.md)"],
     final="<b>Pattern retenu</b> : une Coordination centrale en code (pattern superviseur), seule à conclure · quatre "
           "contrôles déterministes, chacun maître d'une seule section, en séquence avec court-circuit · un agent de "
-          "cohérence des pièces (2 bis, modèle qui décrit, verdict en code) · deux agents de lecture en amont (phase E) · "
+          "cohérence des pièces (2 bis, modèle qui interprète, verdict en code) · deux agents de lecture en amont (phase E) · "
           "un seul appel au partenaire · une trace à chaque étape",
     tension="<b>Tension à arbitrer</b> : le code est prévisible mais rigide ; un système tout agentique est souple mais "
             "difficile à garantir. Ici chaque règle est chiffrée et les engagements sont absolus (issue garantie, 10 s) : "
@@ -390,7 +390,7 @@ s.box("coord", "<b>Coordination</b> (code, sans LLM) · <b>seule à lire et à �
 s.box("grp", "", 320, 210, 1100, 225, S_GROUPE)
 s.box("contrat", "<b>Contrôles déterministes</b> (cadre bleu) : un contrat fixe, entrée, sortie, erreurs. Réalisés en code ; "
                  "la réalisation peut changer sans toucher à la Coordination ni à la mémoire. <b>Cadre cyan</b> : un "
-                 "modèle décrit, un schéma strict valide, le code décide.",
+                 "modèle interprète, un schéma strict valide, le code décide.",
       1460, 395, 170, 185, S_NOTE)
 agents = [
     ("ae", "<b>1 · Éligibilité</b> · <b>section : eligibilite</b><br>E1 contrat actif, E2 cotisations, E3 carence 30 j, "
@@ -399,7 +399,7 @@ agents = [
            "adresse le complément confié par la Coordination.<br><i>Les images sont lues en amont, par le lecteur de "
            "pièces.</i>", 554),
     ("ac", "<b>2 bis · Documents et cohérence</b> · <b>section : coherence</b><br>Chemin des pièces (§ 5) : chaque "
-           "pièce nette se rapporte-t-elle au sinistre déclaré ?<br><i>Le modèle décrit, le code rend le verdict ; "
+           "pièce nette se rapporte-t-elle au sinistre déclaré ?<br><i>Le modèle interprète, le code rend le verdict ; "
            "appel lancé à l'arrivée.</i>", 768),
     ("aes", "<b>3 · Estimation</b> · <b>section : estimation</b><br>Montant justifié, retenu, estimé ; franchise ; "
             "plafond de la formule.<br><i>Calcul : jamais confié à un LLM.</i>", 982),

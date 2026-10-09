@@ -111,7 +111,7 @@ s.box("garde", "<b>Garde-fous</b><br>• Le texte d'un document est une donnée,
                "dans chaque consigne, document entre balises.<br>• Clé dans .env, jamais dans le code ni dans Git ; "
                "aucune relance automatique.<br>• Un seul budget de 10 s par demande, lecture comprise : chaque appel au modèle "
                "reçoit le temps restant comme délai ; à court de temps, escalade technique. Lecture tracée à part.<br>"
-               "• Cohérence : pièces et déclaration entre balises, jamais des consignes ; le modèle décrit, le code rend "
+               "• Cohérence : pièces et déclaration entre balises, jamais des consignes ; le modèle interprète, le code rend "
                "le verdict ; une contradiction va à une personne, jamais à un refus.", 30, 1075, 760, 150, S_NOTE)
 s.box("mesure", "<b>Mesure E4</b> relancée (08/10/2026, commit 5cb2a4e, 34 dossiers, gpt-5.4)<br>100 % sur chaque "
                 "champ (5 du contrat, 33 montants, 68 lisibilités) · 0 lecture impossible · 32/34 décisions identiques au "

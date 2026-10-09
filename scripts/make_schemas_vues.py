@@ -112,7 +112,7 @@ s.box("elig", f"<b>1 · Éligibilité</b> {e(2)}<br><i>règles en code</i><br>"
 s.box("pieces", f"<b>2 · Pièces justificatives</b> {e(2)}<br><i>code ; lisibilité rendue par le Lecteur de pièces</i><br>"
                 "Présence, lisibilité, type attendu ; adresse le complément que la Coordination lui confie.<br>"
                 + interdit("conclure, chiffrer, juger la fraude"), 287, 320, 207, 200, S_AGENT)
-s.box("coh", f"<b>2 bis · Documents et cohérence</b> {e(2)}<br><i>modèle qui décrit, verdict en code</i><br>"
+s.box("coh", f"<b>2 bis · Documents et cohérence</b> {e(2)}<br><i>modèle qui interprète, verdict en code</i><br>"
              "Chemin des pièces (§ 5) : chaque pièce nette se rapporte-t-elle au sinistre déclaré ? Appel lancé à "
              "l'arrivée.<br>" + interdit("refuser, chiffrer, juger la fraude"), 509, 320, 207, 200, S_LECTEUR)
 s.box("estim", f"<b>3 · Estimation</b> {e(2)}<br><i>calcul en code</i><br>"
